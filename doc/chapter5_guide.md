@@ -26,7 +26,7 @@ Agents add points here as they come up during the build. Each point should link 
 
 ## Discussion points (added during the build)
 
-_None yet._
+- **Why an impact threshold alone cannot work** (Phase 1, `results/figures/phase1_examples.png`, train subject SA01). The unknown ADL D10 (quickly sit in a low chair) reaches ~3.2 g `Am`, above the PRD's starting impact threshold of 2.5 g, so impact alone would raise a false alarm. What separates it from the fall F01 (~9 g peak) is what happens *after*: in D10 the person moves again within ~4 s (stands up), while after the fall the signal goes flat (lying still). This is the motivation for checking post-event windows (orientation, stillness, rest) instead of the impact alone. Check whether E3 on the test split confirms this pattern before claiming it.
 
 ## Recommendations and future work (added during the build)
 

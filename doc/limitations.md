@@ -14,7 +14,9 @@ Add an entry as soon as a limitation is found. Do not soften it.
 
 ## Found during the build
 
-_None yet._
+- **Elderly unknown-ADL coverage is thin** (Phase 1). Elderly subjects other than SE06 never performed D13 or D18 (physician's advice), and SE02 also lacks D10. The E6 elderly subgroup's unknown-ADL results therefore rest mainly on D10 and D11. State this when reporting E6. Source: `dataset_notes.md`.
+- **Elderly falls come from one person** (Phase 1). SE06, a judo expert, is the only elderly subject with falls, and is in the test split. Elderly fall sensitivity is based on one subject's 75 trials and should not be generalised.
+- **5 trials missing from the dataset** (Phase 1). 4,505 files instead of the readme's 4,510 (SA17 D06 R01; SA20 D06 R02, D17 R02, F01 R03, F10 R04). Minor; see `dataset_notes.md`.
 
 ## Failure cases (Phase 6)
 

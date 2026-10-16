@@ -1,0 +1,49 @@
+{
+  "seed": 42,
+  "created_at": "2026-10-16T17:55:46+00:00",
+  "train": [
+    "SA01",
+    "SA02",
+    "SA03",
+    "SA04",
+    "SA05",
+    "SA06",
+    "SA09",
+    "SA10",
+    "SA12",
+    "SA13",
+    "SA14",
+    "SA15",
+    "SA20",
+    "SA21",
+    "SA22",
+    "SE01",
+    "SE02",
+    "SE03",
+    "SE04",
+    "SE08",
+    "SE09",
+    "SE10",
+    "SE12",
+    "SE13"
+  ],
+  "val": [
+    "SA07",
+    "SA08",
+    "SA16",
+    "SA17",
+    "SE05",
+    "SE07",
+    "SE15"
+  ],
+  "test": [
+    "SA11",
+    "SA18",
+    "SA19",
+    "SA23",
+    "SE06",
+    "SE11",
+    "SE14"
+  ],
+  "notes": "SE06 forced to test (75 fall trials; config split.force_test)"
+}

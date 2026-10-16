@@ -1,0 +1,86 @@
+# Fall Monitoring System - default configuration.
+# Data source: SisFall dataset replay (simulated IoT stream). No physical device.
+# Every tunable value lives here (PRD Section 17). Values marked VERIFY are checked
+# against the SisFall readme/files in Phase 1; results go in doc/dataset_notes.md.
+
+seed: 42
+
+dataset:
+  raw_dir: data/raw/SisFall_dataset
+  processed_dir: data/processed
+  splits_path: data/splits.json
+  fs_raw: 200
+  sensors:
+    adxl345: {range_g: 16, bits: 13}     # VERIFY
+    itg3200: {range_dps: 2000, bits: 16} # VERIFY
+
+activities:
+  known_adls:   [D01, D02, D03, D04, D05, D06, D07, D08, D09, D12, D14, D15, D16, D17, D19]
+  unknown_adls: [D10, D11, D13, D18]
+  falls:        [F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15]
+
+split:
+  young:   {train: 15, val: 4, test: 4}
+  elderly: {train: 9,  val: 3, test: 3}
+  force_test: [SE06]   # VERIFY which elderly subject has falls
+
+preprocessing:
+  lowpass_hz: 20
+  filter_order: 4
+  target_fs: 50
+  offline_zero_phase: false
+  channels: [ax, ay, az, gx, gy, gz, Am, Gm]
+
+dte:
+  window_lengths_s: [1.0, 2.0, 3.0]
+  train_stride_s: 0.25
+  max_windows_per_trial: 200
+  batch_size: 128
+  lr: 0.001
+  weight_decay: 0.0001
+  epochs: 40
+  patience: 6
+  dropout: 0.3
+
+ood:
+  threshold: 0.9
+
+stream:
+  decision_stride_s: 0.5
+  default_speed: 10
+
+events:
+  merge_gap_s: 1.0
+  cooldown_s: 10.0
+
+verifier:
+  impact_search_pre_s: 1.5
+  impact_search_post_s: 1.0
+  post_window_s: 2.0
+  pre_interval_s: [-2.0, -1.0]
+  post_interval_start_s: 1.0
+  still_std_g: 0.05
+  combine: impact_and_any
+  k: 2
+  thresholds: {impact_g: 2.5, orient_deg: 45, still_std_g: 0.08, rest_s: 1.0}
+  min_fall_recall: 0.95
+  grid:
+    impact_g: [1.8, 2.0, 2.5, 3.0, 3.5]
+    orient_deg: [30, 45, 60]
+    still_std_g: [0.05, 0.08, 0.12]
+    rest_s: [0.5, 1.0, 1.5]
+    combine: [impact_and_any, impact_and_k_of_3, all]
+    k: [2]
+    post_window_s: [1.5, 2.0, 3.0]
+
+logging:
+  db_path: logs/fallmon.db
+  activity_log_interval_s: 2.0
+
+notifier:
+  channels: [console]      # add email, telegram when configured
+  enabled_in_eval: false
+
+evaluation:
+  bootstrap_resamples: 1000
+  sweep_post_window_s: [1.0, 1.5, 2.0, 3.0, 4.0]

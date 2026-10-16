@@ -1,0 +1,14 @@
+# Dataset summary
+
+Data source: SisFall dataset replay (simulated IoT stream).
+
+4505 trial files. Subject taken from folder (decision D-005).
+
+| activity_group   | age_group   |   subjects |   trials |   hours |
+|:-----------------|:------------|-----------:|---------:|--------:|
+| fall             | elderly     |          1 |       75 |    0.31 |
+| fall             | young       |         23 |     1723 |    7.18 |
+| known_adl        | elderly     |         15 |      738 |    4.49 |
+| known_adl        | young       |         23 |     1354 |    8    |
+| unknown_adl      | elderly     |         15 |      155 |    0.51 |
+| unknown_adl      | young       |         23 |      460 |    1.53 |
