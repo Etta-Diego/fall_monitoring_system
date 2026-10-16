@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+
+# Dataset and caches (data/splits.json IS committed)
+data/raw/
+data/processed/
+
+# Trained models (metadata JSON is committed)
+models/*.pt
+models/*.pth
+
+# Runtime logs / SQLite
+logs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
