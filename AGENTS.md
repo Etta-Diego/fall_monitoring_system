@@ -55,7 +55,7 @@ Hardware/firmware (ESP32, Raspberry Pi, BLE, MQTT), XAI (SHAP/LIME), a fall clas
 
 ## 3. Tech stack and layout
 
-Python 3.11, PyTorch (CPU), scikit-learn, scipy, numpy, pandas, statsmodels (McNemar), PyYAML + pydantic, Typer (CLI), SQLite (stdlib), Streamlit + Plotly (dashboard), matplotlib (300 dpi PNG thesis figures), pytest. Secrets go in `.env` (commit `.env.example` only).
+Python 3.11, PyTorch (CPU), scikit-learn, scipy, numpy, pandas, statsmodels (McNemar), PyYAML + pydantic, Typer (CLI), SQLite (stdlib), Streamlit + Plotly (dashboard), matplotlib (300 dpi PNG thesis figures), pytest.
 
 Set seeds (Python, numpy, torch) from config. Use `torch.use_deterministic_algorithms(True)` where it does not break ops.
 

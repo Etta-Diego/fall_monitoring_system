@@ -1,0 +1,214 @@
+config:
+  activities:
+    class_groups:
+      bending:
+      - D15
+      - D16
+      car:
+      - D17
+      jogging:
+      - D03
+      - D04
+      jump:
+      - D19
+      lying:
+      - D12
+      - D14
+      sit_stand:
+      - D07
+      - D08
+      - D09
+      stairs:
+      - D05
+      - D06
+      walking:
+      - D01
+      - D02
+    falls:
+    - F01
+    - F02
+    - F03
+    - F04
+    - F05
+    - F06
+    - F07
+    - F08
+    - F09
+    - F10
+    - F11
+    - F12
+    - F13
+    - F14
+    - F15
+    known_adls:
+    - D01
+    - D02
+    - D03
+    - D04
+    - D05
+    - D06
+    - D07
+    - D08
+    - D09
+    - D12
+    - D14
+    - D15
+    - D16
+    - D17
+    - D19
+    unknown_adls:
+    - D10
+    - D11
+    - D13
+    - D18
+  dataset:
+    fs_raw: 200
+    processed_dir: data/processed
+    raw_dir: data/raw/SisFall_dataset
+    sensors:
+      adxl345:
+        bits: 13
+        range_g: 16.0
+      itg3200:
+        bits: 16
+        range_dps: 2000.0
+    splits_path: data/splits.json
+  dte:
+    batch_size: 128
+    dropout: 0.3
+    epochs: 40
+    label_scheme: grouped_static
+    lr: 0.001
+    max_windows_per_trial: 200
+    patience: 6
+    static:
+      am_std_g: 0.02
+      gm_mean_dps: 10.0
+    train_stride_s: 0.24
+    weight_decay: 0.0001
+    window_lengths_s:
+    - 1.0
+    - 2.0
+    - 3.0
+  evaluation:
+    bootstrap_resamples: 1000
+    report_calibrated_baseline: true
+    sweep_post_window_s:
+    - 1.0
+    - 1.5
+    - 2.0
+    - 3.0
+    - 4.0
+  events:
+    cooldown_s: 10.0
+    merge_gap_s: 1.0
+  logging:
+    activity_log_interval_s: 2.0
+    db_path: logs/fallmon.db
+  notifier:
+    channels:
+    - console
+    enabled_in_eval: false
+  ood:
+    threshold: 0.9
+  preprocessing:
+    channels:
+    - ax
+    - ay
+    - az
+    - gx
+    - gy
+    - gz
+    - Am
+    - Gm
+    filter_order: 4
+    lowpass_hz: 20.0
+    offline_zero_phase: false
+    target_fs: 50
+  seed: 42
+  split:
+    elderly:
+      test: 3
+      train: 9
+      val: 3
+    force_test:
+    - SE06
+    young:
+      test: 4
+      train: 15
+      val: 4
+  stream:
+    decision_stride_s: 0.5
+    default_speed: 10.0
+  verifier:
+    combine: impact_and_any
+    grid:
+      combine:
+      - impact_and_any
+      - impact_and_k_of_3
+      - all
+      impact_g:
+      - 1.8
+      - 2.0
+      - 2.5
+      - 3.0
+      - 3.5
+      k:
+      - 2
+      orient_deg:
+      - 30.0
+      - 45.0
+      - 60.0
+      post_window_s:
+      - 1.5
+      - 2.0
+      - 3.0
+      rearm_after_reject:
+      - false
+      - true
+      rest_s:
+      - 0.5
+      - 1.0
+      - 1.5
+      still_std_g:
+      - 0.05
+      - 0.08
+      - 0.12
+    impact_search_post_s: 1.0
+    impact_search_pre_s: 1.5
+    impact_window_s: 1.0
+    k: 2
+    min_fall_recall: 0.95
+    post_interval_start_s: 1.0
+    post_window_s: 2.0
+    pre_interval_s:
+    - -2.0
+    - -1.0
+    rearm_after_reject: false
+    rolling_std_s: 0.5
+    still_std_g: 0.05
+    thresholds:
+      impact_g: 2.5
+      orient_deg: 45.0
+      rest_s: 1.0
+      still_std_g: 0.08
+data_source: SisFall dataset replay (simulated IoT stream)
+files_sha256:
+  data/splits.json: bbc019565252701b0452a1394b62e5a57cd7ce32e40d33550ca6c026357ea26a
+  models/dte_meta.json: 4ba12a4701f3ec3e2f9654b2ef245e95f54cbf5a48a311037f761eade0532108
+  models/dte_w1.0s.pt: a967c7cd3ab5fa1b0d2869d231a5b38e8c086a849ff5a1f6e56a9ff85f9a1f3d
+  models/dte_w2.0s.pt: 8f68e1227d4c6f35d9a724fb8a71e5d6c6d0d7e73c306b29312bb74ab1ce4e99
+  models/dte_w3.0s.pt: 5ec03d30a6c4c2c7ecd48801b17d0b154665af2a51ce9ab7775b65187e837bed
+  models/scaler.json: f53de90ec497a082967f370e3986c1eaa054d711c5c8365f9454cbc1b4ef8856
+  models/verifier_config.json: a5479c4c91413a6a3b8ffb0626084a28ea31ce2eb2c180e8afa191a7a8e33df4
+frozen_at: '2026-10-17T06:45:59+00:00'
+git_hash: 38454971e98d458b4fcbbf3b7fadc0a46d276f0a-dirty
+verifier_params:
+  combine: impact_and_k_of_3
+  impact_g: 3.0
+  k: 2
+  orient_deg: 30.0
+  post_window_s: 1.5
+  rearm_after_reject: true
+  rest_s: 1.0
+  still_std_g: 0.12

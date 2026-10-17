@@ -166,7 +166,7 @@ class LoggingConfig(_Strict):
 
 
 class NotifierConfig(_Strict):
-    channels: list[Literal["console", "email", "telegram"]]
+    channels: list[Literal["console"]]
     enabled_in_eval: bool
 
 

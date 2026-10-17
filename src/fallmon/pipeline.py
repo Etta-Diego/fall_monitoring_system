@@ -230,6 +230,8 @@ class StreamProcessor:
         self.longest = max(ensemble.window_samples)
         self.step_samples = cfg.samples(cfg.stream.decision_stride_s)
         self.state: _TrialState | None = None
+        self._last_physical = np.empty((0, 8))
+        self._last_records: list[dict] = []
 
     # ----- public API -------------------------------------------------------------------------
 
@@ -264,12 +266,23 @@ class StreamProcessor:
         self._flush_activity()
         if self.storage:
             self.storage.commit()
+        self._last_physical = np.asarray(st.physical) if st.physical else np.empty((0, 8))
+        self._last_records = [dict(r) for r in self.engine.records.values()]
         self.state = None
         return out
 
     def reset(self) -> None:
         self.finish()
         self.engine.reset()
+
+    def physical_history(self) -> np.ndarray:
+        """Filtered 50 Hz physical signal (ALL_CHANNELS order) of the current, or last finished, trial."""
+        return np.asarray(self.state.physical) if self.state and self.state.physical else self._last_physical
+
+    def event_records(self) -> list[dict]:
+        """Copies of the event records of the current, or last finished, trial (for display)."""
+        recs = self.engine.records.values() if self.state else self._last_records
+        return [dict(r) for r in recs]
 
     # ----- internals ----------------------------------------------------------------------------
 
@@ -359,6 +372,13 @@ class StreamProcessor:
                                       st.trial_id, activity, conf)
         st.activity_buf.clear()
         st.activity_window_start = t
+
+
+def run_config(cfg: Config, params: VerifierParams | None) -> dict:
+    """What is stored in runs.config_json: merged config plus the verifier parameters in use."""
+    from dataclasses import asdict
+
+    return {**cfg.model_dump(mode="json"), "verifier_params": asdict(params) if params else None}
 
 
 def _short_reason(rec: dict) -> str:

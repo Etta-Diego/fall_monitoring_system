@@ -123,3 +123,8 @@ Entry format:
 - Decision: the ±0.5 s impact-peak window and the 0.5 s rolling-std window of PRD 9.3 are config values (`verifier.impact_window_s: 1.0`, `verifier.rolling_std_s: 0.5`) instead of constants in code (no magic numbers, PRD 0.5). Values unchanged.
 - Note on the rest rule: the post interval runs from t_impact + 1.0 s to t_impact + post_window_s, so with post_window_s = 1.5 s it is only 0.5 s long and `low_activity_s` cannot reach rest_s ≥ 1.0 s. This is a property of the PRD's parameterisation, not a bug. It is reported with the selected configuration rather than changed (changing it now would be redesign after seeing validation results).
 - Rules evaluate to false when their feature has no data (e.g. trial ended before the post interval); such verifications are flagged `truncated`.
+
+## D-014: Console-only notifications (email and Telegram removed from scope)
+- Date / phase: 2026-10-17 / Phase 5. Developer's decision.
+- Decision: the system notifies through the console only; every alert is also stored in the SQLite alert log and shown on the dashboard. Email (SMTP) and Telegram notifiers are not built. All references were removed from the PRD (Sections 2.1, 3, 4, 12.4, 14 Phase 5, 17), `config/default.yaml`, `src/fallmon/config.py`, `src/fallmon/notifier.py` and `AGENTS.md`; `.env.example` and the `python-dotenv` dependency were deleted (they existed only for those channels).
+- Effect: no effect on any result. The Phase 5 acceptance item "email or Telegram test message" no longer applies. `notifier.channels` accepts only `console`.

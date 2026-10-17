@@ -1,6 +1,16 @@
-"""Leakage guards and test lock (PRD Section 11). Further guards are added in later phases."""
+"""Leakage guards and test lock (PRD Section 11)."""
 
 from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+import yaml
+
+FROZEN_CONFIG = Path("results/frozen_config.yaml")
+FROZEN_HASH = Path("results/frozen_config.sha256")
 
 
 class LeakageError(AssertionError):
@@ -62,3 +72,67 @@ def assert_verifier_tuned_without_test_or_unknown(tuning_index, splits: dict) ->
     outside = set(tuning_index["subject_id"]) - set(splits["val"])
     if outside:
         raise LeakageError(f"verifier tuning data contains non-validation subjects: {sorted(outside)}")
+
+
+# ----- test lock: freeze config + models before the test split is opened (PRD 11.5) ------------
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalise(obj):
+    return json.loads(json.dumps(obj, sort_keys=True, default=str))
+
+
+def freeze_payload(cfg, model_dir: Path = Path("models")) -> dict:
+    """Everything that determines test results: merged config, verifier parameters, and file hashes."""
+    verifier_path = model_dir / "verifier_config.json"
+    if not verifier_path.exists():
+        raise FileNotFoundError(f"{verifier_path} missing: run `fallmon tune-verifier` before freezing")
+    files = sorted(model_dir.glob("dte_w*.pt")) + [model_dir / "dte_meta.json", model_dir / "scaler.json",
+                                                   verifier_path, Path(cfg.dataset.splits_path)]
+    missing = [str(f) for f in files if not f.exists()]
+    if missing:
+        raise FileNotFoundError(f"cannot freeze, missing files: {missing}")
+    return _normalise({
+        "config": cfg.model_dump(mode="json"),
+        "verifier_params": json.loads(verifier_path.read_text())["params"],
+        "files_sha256": {str(f): _sha256(f) for f in files},
+    })
+
+
+def write_freeze(cfg, git_hash: str, force: bool = False, model_dir: Path = Path("models"),
+                 frozen_config: Path = FROZEN_CONFIG, frozen_hash: Path = FROZEN_HASH) -> str:
+    """Write the frozen config (YAML) and its SHA-256. Returns the hash."""
+    if frozen_config.exists() and not force:
+        raise FileExistsError(f"{frozen_config} already exists; pass --force to re-freeze")
+    doc = {"frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "git_hash": git_hash,
+           "data_source": "SisFall dataset replay (simulated IoT stream)", **freeze_payload(cfg, model_dir)}
+    text = yaml.safe_dump(doc, sort_keys=True)
+    frozen_config.parent.mkdir(parents=True, exist_ok=True)
+    frozen_config.write_text(text)
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    frozen_hash.write_text(f"{digest}  {frozen_config.name}\n")
+    return digest
+
+
+def check_frozen(cfg, model_dir: Path = Path("models"), frozen_config: Path = FROZEN_CONFIG,
+                 frozen_hash: Path = FROZEN_HASH) -> str:
+    """Unlock check for the test split: the frozen file exists, is untampered, and matches the current
+    config and model files. Returns the frozen hash; raises TestLockError otherwise."""
+    if not frozen_config.exists() or not frozen_hash.exists():
+        raise TestLockError(f"{frozen_config} not found: run `fallmon freeze` first (PRD 11.5)")
+    text = frozen_config.read_text()
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    recorded = frozen_hash.read_text().split()[0]
+    if digest != recorded:
+        raise TestLockError(f"{frozen_config} does not match {frozen_hash}: the frozen file was edited")
+    frozen = yaml.safe_load(text)
+    current = freeze_payload(cfg, model_dir)
+    problems = [k for k in ("config", "verifier_params") if _normalise(frozen.get(k)) != current[k]]
+    problems += [f"file {f}" for f in sorted(set(frozen.get("files_sha256", {})) | set(current["files_sha256"]))
+                 if frozen.get("files_sha256", {}).get(f) != current["files_sha256"].get(f)]
+    if problems:
+        raise TestLockError("current setup differs from the frozen one (" + ", ".join(problems) +
+                            "). Re-freezing after looking at test results is not allowed.")
+    return digest

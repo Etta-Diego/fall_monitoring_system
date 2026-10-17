@@ -1,6 +1,6 @@
-"""Alert notifications (PRD 12.4). Every message says [SIMULATED]; failures are logged, never raised.
+"""Alert notifications (PRD 12.4): console only. Every message says [SIMULATED]; failures are logged, never raised.
 
-Console is always available. Email and Telegram are added in Phase 5.
+Alerts are also recorded in the SQLite alert log and shown on the dashboard.
 """
 
 from __future__ import annotations
@@ -71,6 +71,4 @@ def build_notifier(cfg: Config) -> MultiNotifier:
     for ch in cfg.notifier.channels:
         if ch == "console":
             notifiers.append(ConsoleNotifier())
-        else:
-            log.warning("notifier channel %r is not implemented yet (Phase 5); skipped", ch)
     return MultiNotifier(notifiers)

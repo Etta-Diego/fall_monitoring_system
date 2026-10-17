@@ -98,7 +98,7 @@ logging:
   activity_log_interval_s: 2.0
 
 notifier:
-  channels: [console]      # add email, telegram when configured
+  channels: [console]      # console only (D-014)
   enabled_in_eval: false
 
 evaluation:

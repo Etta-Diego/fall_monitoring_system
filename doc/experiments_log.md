@@ -101,3 +101,10 @@ Entry format:
 - Run: `20261017T061506-proposed-93e433`
 - Key results: alerted trials known ADL 3/381 (0.0079), fall 288/300 (0.9600), exactly matching the tuning replay (X-005). Latency per decision step mean 1.884 ms, p95 2.937 ms, max 53.0 ms over 21,748 steps (baseline X-004: 1.746 / 2.589 ms).
 - Source files: `results/tables/phase3_batch_val_proposed.*`, `logs/fallmon.db`
+
+## X-008: Freeze before test evaluation
+- Date / phase: 2026-10-17 / Phase 5
+- Command: `fallmon freeze`
+- Frozen hash: `9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956` (frozen 2026-10-17 06:45:59 UTC)
+- Locks: config, verifier params (X-005), `models/dte_w{1.0,2.0,3.0}s.pt`, `dte_meta.json`, `scaler.json`, `verifier_config.json`, `data/splits.json`
+- Source files: `results/frozen_config.yaml`, `results/frozen_config.sha256`

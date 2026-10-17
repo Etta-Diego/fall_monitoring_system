@@ -131,7 +131,7 @@ def stream(
     from fallmon.data_loader import load_trial
     from fallmon.guards import assert_not_test
     from fallmon.notifier import build_notifier
-    from fallmon.pipeline import StreamProcessor
+    from fallmon.pipeline import StreamProcessor, run_config
     from fallmon.reporting import DATA_SOURCE
     from fallmon.splits import load_splits
     from fallmon.storage import Storage
@@ -151,7 +151,7 @@ def stream(
     notifier = build_notifier(cfg)
     params = load_params(cfg)
     procs = {m: StreamProcessor(m, cfg, ens, scaler, storage, notifier,
-                                storage.start_run(m, "adhoc", cfg.model_dump()), params=params) for m in modes}
+                                storage.start_run(m, "adhoc", run_config(cfg, params)), params=params) for m in modes}
     speed = speed or cfg.stream.default_speed
     typer.echo(f"Data source: {DATA_SOURCE}. No physical device.")
     typer.echo(f"Trial {trial} ({row['activity_group'].replace('_', ' ')}), mode {mode}, speed {speed}x")
@@ -195,7 +195,7 @@ def batch(
     from fallmon.data_loader import load_trial
     from fallmon.guards import assert_not_test
     from fallmon.notifier import build_notifier
-    from fallmon.pipeline import StreamProcessor, run_batch, summarise_batch
+    from fallmon.pipeline import StreamProcessor, run_batch, run_config, summarise_batch
     from fallmon.reporting import write_table
     from fallmon.splits import load_splits
     from fallmon.storage import Storage
@@ -213,10 +213,11 @@ def batch(
 
     ens, scaler = _load_runtime(cfg)
     storage = Storage(cfg.logging.db_path)
+    params = load_params(cfg)
     for m in modes:
-        run_id = storage.start_run(m, split, cfg.model_dump())
+        run_id = storage.start_run(m, split, run_config(cfg, params))
         notifier = build_notifier(cfg) if cfg.notifier.enabled_in_eval else None  # off by default (PRD 12.4)
-        proc = StreamProcessor(m, cfg, ens, scaler, storage, notifier, run_id, params=load_params(cfg))
+        proc = StreamProcessor(m, cfg, ens, scaler, storage, notifier, run_id, params=params)
         trials = (load_trial(Path(cfg.dataset.raw_dir) / p, cfg) for p in rows["path"])
         decisions = run_batch(trials, proc)
         table, stats = summarise_batch(decisions, index)
@@ -274,6 +275,22 @@ def filter_check(config: str = ConfigOpt) -> None:
     ens, scaler = _load_runtime(cfg)
     table = run_filter_check(index, load_splits(cfg.dataset.splits_path), ens, scaler, cfg)
     typer.echo(table.to_string(index=False))
+
+
+@app.command("freeze")
+def freeze(
+    force: bool = typer.Option(False, "--force", help="Overwrite an existing frozen config."),
+    config: str = ConfigOpt,
+) -> None:
+    """Lock config + models + verifier before the test split is unlocked (PRD 11.5)."""
+    from fallmon.config import load_config
+    from fallmon.guards import FROZEN_CONFIG, FROZEN_HASH, check_frozen, write_freeze
+    from fallmon.utils import git_hash
+
+    cfg = load_config(config)
+    digest = write_freeze(cfg, git_hash(), force=force)
+    check_frozen(cfg)
+    typer.echo(f"Wrote {FROZEN_CONFIG} and {FROZEN_HASH}\nFrozen hash: {digest}")
 
 
 if __name__ == "__main__":

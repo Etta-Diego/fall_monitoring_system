@@ -51,7 +51,7 @@ The contribution is this verification stage. Everything else reproduces existing
 - Shared event logic (merge OOD steps into events, cooldown).
 - Real-time stream simulator (sample-by-sample replay, configurable speed).
 - SQLite logging: activity log, unknown activity log, alert log, event decision trace.
-- Alert notifier: console (always), email via SMTP (optional), Telegram bot (optional).
+- Alert notifier: console only (alerts also recorded in the alert log and shown on the dashboard).
 - Streamlit monitoring dashboard.
 - Full evaluation pipeline producing tables and figures for Chapter 4.
 - CLI for every step.
@@ -87,7 +87,7 @@ The contribution is this verification stage. Everything else reproduces existing
 | Dashboard | Streamlit + Plotly |
 | Plots for thesis | matplotlib (PNG, 300 dpi) |
 | Tests | pytest |
-| Env | `requirements.txt`, `.env` for secrets (`.env.example` committed) |
+| Env | `requirements.txt` |
 
 Set global seeds (Python, numpy, torch) from config. Use `torch.use_deterministic_algorithms(True)` where it does not break ops.
 
@@ -100,7 +100,6 @@ fall_monitoring_system/
 ├── README.md
 ├── PRD.md
 ├── requirements.txt
-├── .env.example
 ├── config/
 │   └── default.yaml
 ├── data/
@@ -131,7 +130,7 @@ fall_monitoring_system/
 │   ├── pipeline.py                 # StreamProcessor: baseline / proposed modes
 │   ├── stream_simulator.py         # sample-by-sample replay
 │   ├── storage.py                  # SQLite schema + writes
-│   ├── notifier.py                 # console / email / telegram
+│   ├── notifier.py                 # console notifier
 │   ├── evaluation.py               # metrics, stats, tables, figures
 │   ├── guards.py                   # test-lock + leakage assertions
 │   └── cli.py                      # Typer app
@@ -421,9 +420,7 @@ Every event row must contain a human-readable `reason` explaining why it was ale
 
 ### 12.4 Notifier (`notifier.py`)
 - `ConsoleNotifier` always on.
-- `EmailNotifier` (SMTP, env vars `SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, ALERT_TO`).
-- `TelegramNotifier` (env `TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID`).
-- Enabled via config `notifier.channels`. Failures are logged, never crash the stream.
+- Enabled via config `notifier.channels` (console only). Failures are logged, never crash the stream.
 - Message template:
 ```
 [SIMULATED] Verified fall alert
@@ -532,10 +529,9 @@ Build `verifier.py`, proposed mode in `pipeline.py`, `tune_verifier.py`, CLI `tu
 - Causal vs zero-phase filter check reported (Section 6.1).
 
 ### Phase 5: Dashboard, notifier channels, freeze
-Build `app/dashboard.py`, email/telegram notifiers, CLI `freeze`.
+Build `app/dashboard.py`, CLI `freeze`.
 **Accept when:**
 - Dashboard runs with `streamlit run app/dashboard.py`; side-by-side mode works on a validation trial.
-- Email or Telegram test message sends with `[SIMULATED]` prefix (if credentials provided).
 - `fallmon freeze` writes frozen config + hash.
 - **Stop and report. Developer confirms before Phase 6.**
 
@@ -655,7 +651,7 @@ logging:
   activity_log_interval_s: 2.0
 
 notifier:
-  channels: [console]      # add email, telegram when configured
+  channels: [console]
   enabled_in_eval: false
 
 evaluation:

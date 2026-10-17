@@ -20,9 +20,9 @@ A suggested outline, with pointers to the notes and generated artefacts for each
 
 **4.6 Proposed post-event temporal verification**: impact localisation, features, rules, combination modes, tuning on validation and the selected config: `results/tables/verifier_selected_config.md`, `phase_reports/phase4_*`.
 
-**4.7 Event logic, real-time stream and storage**: merge/cooldown, HOLD state, SQLite schema, notifier with `[SIMULATED]` prefix.
+**4.7 Event logic, real-time stream and storage**: merge/cooldown, HOLD state, SQLite schema, console notifier with `[SIMULATED]` prefix (D-014: no email/Telegram).
 
-**4.8 Monitoring dashboard**: screenshots of each page (store them in `results/figures/screenshots/`).
+**4.8 Monitoring dashboard**: four pages (Live Replay, Event Details, Logs, Results), see `phase_reports/phase5_dashboard_freeze.md`; screenshots of each page (store them in `results/figures/screenshots/`).
 
 **4.9 Testing**: unit tests, leakage guards, test lock / frozen hash. Count of tests and pass result from the latest phase report.
 
@@ -47,6 +47,8 @@ Fill in as files are generated. "Split" must be stated for every row.
 | 4.7 | `results/tables/phase3_batch_val_baseline.md` | val | 3 | stream = offline consistency check; latency (development evidence) |
 | 4.6 | `results/tables/verifier_selected_config.md`, `verifier_grid_val_top.md`, `results/figures/phase4_val_verifier_features.png` | val | 4 | selected verifier; development evidence |
 | 4.4 | `results/tables/phase4_filter_check.md` | val | 4 | justifies causal filter |
+| 4.8 | `results/figures/screenshots/` (to be taken by the student) | val | 5 | dashboard pages, side-by-side replay |
+| 4.9 | `results/frozen_config.yaml`, `results/frozen_config.sha256` | – | 5 | test lock, frozen hash 9b9867ac… |
 | 4.10 E1 | `results/tables/e1_classification.md`, `results/figures/e1_confusion_matrix.png` | test | 6 | |
 | 4.10 E2 | `results/tables/e2_ood.md`, `results/figures/e2_confidence_hist_by_group.png`, `e2_roc.png` | test | 6 | |
 | 4.10 E3 | `results/tables/e3_verifier.md`, `e3_verifier_features_by_group.png`, `e3_confusion.png` | test | 6 | |
