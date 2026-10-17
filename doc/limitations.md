@@ -26,6 +26,14 @@ Add an entry as soon as a limitation is found. Do not soften it.
 - **Grid edge** (Phase 4). The selected T_still (0.12 g) is the largest value in the PRD grid.
 - **Decision delay** (Phase 4). The proposed system alerts a median 1.84 s after the impact on validation falls (it must wait for post-impact evidence); the baseline's alerts are earlier but often precede the fall.
 
-## Failure cases (Phase 6)
+- **Validation recall did not carry over to test** (Phase 6, X-010). The verifier met fall recall 0.960 on validation but reached 0.803 [0.760, 0.842] on test; the loss vs the baseline is significant (McNemar p = 1.1e-22). Cause: the 3.0 g impact threshold, chosen on 4 young validation subjects, is too high for subjects with softer falls (SA23, and SE06, a judo expert). With only 4–7 subjects per partition, subject-level variation dominates; a different split could give different numbers.
+- **Unknown-ADL results rest on 120 trials of 7 subjects**; D13 and D18 come from the 4 young test subjects plus SE06 only.
+- **Elderly sensitivity (0.667) comes from one subject**, SE06, whose falls are trained break-falls.
 
-_Unknown-ADL trials the proposed system still alerted on, and falls it missed. Copied from `results/SUMMARY.md`._
+## Failure cases (Phase 6, test split)
+
+Copied from `results/SUMMARY.md`; full lists there.
+- **Unknown-ADL trials still alerted on (5):** D11_SA18_R01, D11_SA18_R03, D11_SA18_R04, D11_SA18_R05, D11_SE11_R01 (all "collapse into a chair").
+- **Known-ADL trials alerted on (1):** D14_SA11_R05.
+- **Falls missed by the proposed system (74):** 35 from SA23, 25 from SE06, 7 SA19, 4 SA18, 3 SA11. By type: F10 13, F13 11, F07 8, F08 8, F14 7, F15 6, F09 5, F03 4, F01 3, F05 2, F06 2, F11 2, F12 2, F02 1, F04 0 (of 25 each). 73 of 74 were examined at the real impact and rejected because the impact peak was below 3.0 g (median 2.17 g).
+- **Falls missed by the baseline:** none (but 44.5% of its fall alerts came more than 1.5 s before the impact).

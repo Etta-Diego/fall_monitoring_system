@@ -1,0 +1,32 @@
+{
+  "frozen_hash": "9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956",
+  "split": "val",
+  "cases": {
+    "1": {
+      "trial_id": "F01_SA07_R01",
+      "rule": "genuine fall: first fall trial (by trial id) where both systems alert and the proposed alert follows a verified impact within 1 s of the reference impact",
+      "activity_group": "fall",
+      "baseline_alerts": 1,
+      "proposed_alerts": 1
+    },
+    "2": {
+      "trial_id": null,
+      "rule": "unseen fall-like ADL: first D10 trial (else any unknown ADL) where the baseline alerts and the proposed does not",
+      "note": "no trial matches this rule"
+    },
+    "3": {
+      "trial_id": "D01_SE15_R01",
+      "rule": "known ADL: first D01 trial (else any known ADL) where neither system opens an event",
+      "activity_group": "known_adl",
+      "baseline_alerts": 0,
+      "proposed_alerts": 0
+    },
+    "4": {
+      "trial_id": "F01_SA08_R05",
+      "rule": "failure case: first unknown-ADL trial the proposed system still alerts on; else first fall it misses",
+      "activity_group": "fall",
+      "baseline_alerts": 1,
+      "proposed_alerts": 0
+    }
+  }
+}

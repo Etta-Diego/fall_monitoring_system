@@ -14,9 +14,7 @@ venv/
 data/raw/
 data/processed/
 
-# Trained models (metadata JSON is committed)
-models/**/*.pt
-models/**/*.pth
+# Trained models are committed (small; needed to reproduce the frozen results, D-015)
 
 # Runtime logs / SQLite
 logs/

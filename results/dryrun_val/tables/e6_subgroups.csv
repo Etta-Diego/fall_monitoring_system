@@ -1,0 +1,6 @@
+# frozen_config_sha256: 9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956
+subgroup,system,subjects,fall_trials,known_trials,unknown_trials,sensitivity,fpr_known,fpr_unknown,precision
+young,baseline,4,300,235,0,1.0,0.966,,0.5693
+young,proposed,4,300,235,0,0.96,0.0085,,0.9931
+elderly,baseline,3,0,146,0,,0.9795,,0.0
+elderly,proposed,3,0,146,0,,0.0068,,0.0

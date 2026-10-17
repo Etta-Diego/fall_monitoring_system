@@ -128,3 +128,9 @@ Entry format:
 - Date / phase: 2026-10-17 / Phase 5. Developer's decision.
 - Decision: the system notifies through the console only; every alert is also stored in the SQLite alert log and shown on the dashboard. Email (SMTP) and Telegram notifiers are not built. All references were removed from the PRD (Sections 2.1, 3, 4, 12.4, 14 Phase 5, 17), `config/default.yaml`, `src/fallmon/config.py`, `src/fallmon/notifier.py` and `AGENTS.md`; `.env.example` and the `python-dotenv` dependency were deleted (they existed only for those channels).
 - Effect: no effect on any result. The Phase 5 acceptance item "email or Telegram test message" no longer applies. `notifier.channels` accepts only `console`.
+
+## D-015: Trained model weights are committed
+- Date / phase: 2026-10-17 / Phase 7
+- Context: PRD 4 listed `models/` as gitignored except metadata. But the definition of done (PRD 19) requires `fallmon evaluate --split test --all` to regenerate every table and figure from a clean clone plus the dataset, and the test lock checks the SHA-256 of the weight files. Retraining on another machine is not guaranteed to be bit-identical, so the hashes would differ and the evaluation would (correctly) refuse.
+- Decision: commit `models/dte_w*.pt` (≈ 109 KB each) and the archived `models/as_specified/*.pt`. A clean clone plus the dataset now reproduces the frozen setup (hash `9b9867ac…f956`) and the final results exactly.
+- Effect: no change to any result.

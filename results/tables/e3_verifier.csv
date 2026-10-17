@@ -1,0 +1,6 @@
+# frozen_config_sha256: 9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956
+event_type,events,verified,truncated,verified_rate,R_impact,R_orient,R_still,R_rest
+fall impact,460,298,0,0.6478,0.6652,0.9978,0.9239,0.0
+"fall trial, other event",333,3,10,0.009,0.012,0.3874,0.4775,0.0
+Known ADLs,1783,1,119,0.0006,0.074,0.2574,0.88,0.0
+Unknown ADLs,429,5,36,0.0117,0.1096,0.2914,0.7949,0.0

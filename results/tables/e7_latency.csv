@@ -1,0 +1,4 @@
+# frozen_config_sha256: 9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956
+system,decision_steps,mean_ms,median_ms,p95_ms,p99_ms,max_ms
+baseline,26516,1.66,1.585,2.206,2.962,49.842
+proposed,26516,1.841,1.666,2.816,3.825,85.23

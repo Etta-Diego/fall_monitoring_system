@@ -1,0 +1,4 @@
+# frozen_config_sha256: 9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956
+system,sensitivity,precision,f1,fpr_known,fpr_unknown,false_alerts_per_hour,delay_median_s
+baseline @ 0.4901,0.8333,0.495,0.6211,0.6693,,131.0256,0.16
+proposed @ 0.4901,0.6267,1.0,0.7705,0.0,,0.0,2.0

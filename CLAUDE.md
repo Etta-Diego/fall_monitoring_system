@@ -15,7 +15,7 @@ The shared rules for every agent are in [AGENTS.md](AGENTS.md), imported above. 
 - **VERIFY items:** inspect the real files (`head`, a small Python snippet) before writing loader or config code. If the dataset is not in `data/raw/SisFall_dataset/` yet, stop and ask the developer to place it. Do not code against guessed formats.
 - **Test split:** do not open, load, window, plot or summarise test-split trial *contents* before Phase 6. Counting files per subject for the dataset summary and split is fine.
 - **Long jobs** (training, grid search, full evaluation): run in the background and keep working or wait for the notification; don't poll.
-- **Git:** commit only when the developer asks. Never commit `data/raw/`, `data/processed/`, model weights, `.env` or `logs/`. Do commit `data/splits.json` once generated.
+- **Git:** commit only when the developer asks. Never commit `data/raw/`, `data/processed/`, `.env` or `logs/`. Model weights in `models/` are committed (D-015). Do commit `data/splits.json` once generated.
 - **Filename note:** the PRD's layout calls the spec `PRD.md`; in this repo it is `fall-monitoring-PRD.md`. Don't rename it unless asked.
 
 ## When unsure

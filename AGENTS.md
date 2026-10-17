@@ -65,7 +65,7 @@ config/default.yaml          all tunables
 data/raw/SisFall_dataset/    dataset (gitignored)
 data/processed/              caches (gitignored)
 data/splits.json             committed once generated
-models/                      weights, scaler.json, dte_meta.json, verifier_config.json
+models/                      weights (committed, D-015), scaler.json, dte_meta.json, verifier_config.json
 results/tables, figures/     Chapter 4 outputs; frozen_config.yaml + .sha256
 logs/fallmon.db              SQLite
 src/fallmon/                 package (config, data_loader, preprocessing, splits, windowing,

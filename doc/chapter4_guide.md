@@ -49,11 +49,12 @@ Fill in as files are generated. "Split" must be stated for every row.
 | 4.4 | `results/tables/phase4_filter_check.md` | val | 4 | justifies causal filter |
 | 4.8 | `results/figures/screenshots/` (to be taken by the student) | val | 5 | dashboard pages, side-by-side replay |
 | 4.9 | `results/frozen_config.yaml`, `results/frozen_config.sha256` | – | 5 | test lock, frozen hash 9b9867ac… |
-| 4.10 E1 | `results/tables/e1_classification.md`, `results/figures/e1_confusion_matrix.png` | test | 6 | |
-| 4.10 E2 | `results/tables/e2_ood.md`, `results/figures/e2_confidence_hist_by_group.png`, `e2_roc.png` | test | 6 | |
-| 4.10 E3 | `results/tables/e3_verifier.md`, `e3_verifier_features_by_group.png`, `e3_confusion.png` | test | 6 | |
-| 4.10 E4 | `results/tables/e4_end_to_end.md`, `e4_baseline_vs_proposed.png` | test | 6 | headline result |
+| 4.10 E1 | `results/tables/e1_classification.md`, `results/figures/e1_confusion_matrix.png` | test | 6 | accuracy 0.8739, macro F1 0.8412 |
+| 4.10 E2 | `results/tables/e2_ood.md`, `e2_ood_rates.md`, `results/figures/e2_confidence_hist_by_group.png`, `e2_roc.png` | test | 6 | AUROC per step 0.684 falls / 0.634 unknown |
+| 4.10 E3 | `results/tables/e3_verifier.md`, `e3_verifier_features_by_group.png`, `e3_confusion.png` | test | 6 | 298/460 fall-impact events verified; 6/2,212 non-fall |
+| 4.10 E4 | `results/tables/e4_end_to_end.md`, `e4_calibrated_threshold.md`, `e4_baseline_vs_proposed.png`, `trial_outcomes_*.md` | test | 6 | headline: FA −99.0%, sensitivity 1.000 → 0.803 |
 | 4.10 E5 | `results/tables/e5_sweep.md`, `e5_post_window_tradeoff.png` | test (reporting only) | 6 | not used for model selection |
-| 4.10 E6 | `results/tables/e6_subgroups.md`, `e6_unknown_adl_breakdown.png` | test | 6 | |
-| 4.10 E7 | `results/tables/e7_latency.md`, `e7_latency.png` | test | 6 | |
-| 4.11 | `demo_case_fall.png`, `demo_case_unknown_adl.png`, `demo_case_known_adl.png` | test | 6 | |
+| 4.10 E6 | `results/tables/e6_subgroups.md`, `e6_unknown_adl_by_code.md`, `e6_unknown_adl_breakdown.png` | test | 6 | D11 is the only unknown code with false alerts (5/35) |
+| 4.10 E7 | `results/tables/e7_latency.md`, `e7_latency.png` | test | 6 | 1.66 / 1.84 ms mean |
+| 4.11 | `demo_case_fall.png`, `demo_case_unknown_adl.png`, `demo_case_known_adl.png`, `demo_case_failure.png`, `results/demo_cases.json` | test | 6 | rule-based choice |
+| 4.12 | `results/SUMMARY.md` | test | 6 | headline numbers, failure cases |

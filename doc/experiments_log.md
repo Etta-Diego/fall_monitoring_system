@@ -108,3 +108,18 @@ Entry format:
 - Frozen hash: `9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956` (frozen 2026-10-17 06:45:59 UTC)
 - Locks: config, verifier params (X-005), `models/dte_w{1.0,2.0,3.0}s.pt`, `dte_meta.json`, `scaler.json`, `verifier_config.json`, `data/splits.json`
 - Source files: `results/frozen_config.yaml`, `results/frozen_config.sha256`
+
+## X-009: Validation dry run of the final evaluation
+- Date / phase: 2026-10-17 / Phase 6
+- Command: `fallmon evaluate --split val --all` (outputs in `results/dryrun_val/`, not results)
+- Purpose: debug the evaluation pipeline before opening the test split.
+- Key results: reproduced X-004/X-005/X-007 exactly (proposed FA 3/381, recall 288/300; baseline 370/381, 300/300); stream vs replay identical; max |Δconfidence| 7.75e-07.
+
+## X-010: FINAL test evaluation
+- Date / phase: 2026-10-17 / Phase 6
+- Command: `fallmon evaluate --split test --all` (run once; 594 s)
+- Frozen hash: `9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956`
+- Split: test, 7 subjects; 393 known-ADL, 120 unknown-ADL, 375 fall trials
+- Key results (trial level, 95% CI): baseline sensitivity 1.000, FPR known 0.962 [0.942, 0.980], FPR unknown 1.000, precision 0.430, F1 0.601, 618 false alerts (225.8/h); proposed sensitivity 0.803 [0.760, 0.842], FPR known 0.003 [0.000, 0.008], FPR unknown 0.042 [0.009, 0.083], precision 0.980, F1 0.883, 6 false alerts (2.19/h). False-alert reduction 0.990. McNemar falls p = 1.059e-22, non-falls p = 1.564e-148. Delay median −1.40 s vs +1.88 s. Latency mean 1.66 vs 1.84 ms. E1 accuracy 0.8739, macro F1 0.8412. E2 AUROC per step known vs falls 0.684, known vs unknown 0.634 (per trial 0.420).
+- Source files: `results/SUMMARY.md`, `results/tables/e*.{md,csv}`, `results/tables/trial_outcomes_{baseline,proposed}.*`, `results/figures/e*.png`, `results/figures/demo_case_*.png`, `results/demo_cases.json`; stream runs in `logs/fallmon.db` (split `test`)
+- Notes: proposed sensitivity on test (0.803) is well below validation (0.960); 73/74 misses had the impact below 3.0 g; misses concentrated in SA23 and SE06. See `phase_reports/phase6_final_evaluation.md`.

@@ -114,47 +114,30 @@ def _load_runtime(cfg):
     return ens, Scaler.load(meta["scaler_path"])
 
 
-@app.command("stream")
-def stream(
-    trial: str = typer.Option(..., "--trial", help="Trial id, e.g. F05_SA01_R01."),
-    mode: str = typer.Option("baseline", "--mode", help="baseline | proposed | both"),
-    speed: float = typer.Option(None, "--speed", help="Replay speed (1 = real time). Default: stream.default_speed."),
-    realtime: bool = typer.Option(True, "--realtime/--fast", help="Pace to wall clock, or run as fast as possible."),
-    config: str = ConfigOpt,
-) -> None:
-    """Replay one trial through the stream processor, print decisions and log to SQLite."""
+def _replay_trial(cfg, trial: str, modes: list[str], speed: float, realtime: bool, split_label: str) -> None:
+    """Replay one trial through one StreamProcessor per mode, print decisions, log to SQLite."""
     from pathlib import Path
 
     import pandas as pd
 
-    from fallmon.config import load_config
     from fallmon.data_loader import load_trial
-    from fallmon.guards import assert_not_test
     from fallmon.notifier import build_notifier
     from fallmon.pipeline import StreamProcessor, run_config
     from fallmon.reporting import DATA_SOURCE
-    from fallmon.splits import load_splits
     from fallmon.storage import Storage
     from fallmon.stream_simulator import StreamSimulator
     from fallmon.verifier import load_params
 
-    cfg = load_config(config)
     index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
-    if trial not in index.index:
-        raise typer.BadParameter(f"unknown trial id {trial!r}")
     row = index.loc[trial]
-    assert_not_test([row["subject_id"]], load_splits(cfg.dataset.splits_path), "stream")
-    modes = ["baseline", "proposed"] if mode == "both" else [mode]
-
     ens, scaler = _load_runtime(cfg)
     storage = Storage(cfg.logging.db_path)
     notifier = build_notifier(cfg)
     params = load_params(cfg)
     procs = {m: StreamProcessor(m, cfg, ens, scaler, storage, notifier,
-                                storage.start_run(m, "adhoc", run_config(cfg, params)), params=params) for m in modes}
-    speed = speed or cfg.stream.default_speed
+                                storage.start_run(m, split_label, run_config(cfg, params)), params=params) for m in modes}
     typer.echo(f"Data source: {DATA_SOURCE}. No physical device.")
-    typer.echo(f"Trial {trial} ({row['activity_group'].replace('_', ' ')}), mode {mode}, speed {speed}x")
+    typer.echo(f"Trial {trial} ({row['activity_group'].replace('_', ' ')}), modes {', '.join(modes)}, speed {speed}x")
     for m, p in procs.items():
         typer.echo(f"  run {m}: {p.run_id}")
 
@@ -178,6 +161,30 @@ def stream(
             show(m, d)
     storage.close()
     typer.echo(f"Logged to {cfg.logging.db_path}")
+
+
+@app.command("stream")
+def stream(
+    trial: str = typer.Option(..., "--trial", help="Trial id, e.g. F05_SA01_R01."),
+    mode: str = typer.Option("baseline", "--mode", help="baseline | proposed | both"),
+    speed: float = typer.Option(None, "--speed", help="Replay speed (1 = real time). Default: stream.default_speed."),
+    realtime: bool = typer.Option(True, "--realtime/--fast", help="Pace to wall clock, or run as fast as possible."),
+    config: str = ConfigOpt,
+) -> None:
+    """Replay one trial through the stream processor, print decisions and log to SQLite."""
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.guards import assert_not_test
+    from fallmon.splits import load_splits
+
+    cfg = load_config(config)
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
+    if trial not in index.index:
+        raise typer.BadParameter(f"unknown trial id {trial!r}")
+    assert_not_test([index.loc[trial, "subject_id"]], load_splits(cfg.dataset.splits_path), "stream")
+    modes = ["baseline", "proposed"] if mode == "both" else [mode]
+    _replay_trial(cfg, trial, modes, speed or cfg.stream.default_speed, realtime, "adhoc")
 
 
 @app.command("batch")
@@ -291,6 +298,83 @@ def freeze(
     digest = write_freeze(cfg, git_hash(), force=force)
     check_frozen(cfg)
     typer.echo(f"Wrote {FROZEN_CONFIG} and {FROZEN_HASH}\nFrozen hash: {digest}")
+
+
+@app.command("evaluate")
+def evaluate(
+    split: str = typer.Option("test", "--split", help="test (final, needs freeze) | val (dry run, separate folder)"),
+    all_: bool = typer.Option(False, "--all", help="Run every experiment E1-E7 (the only mode implemented)."),
+    rerun: bool = typer.Option(False, "--rerun", help="Allow re-running the final test evaluation."),
+    config: str = ConfigOpt,
+) -> None:
+    """Final evaluation (PRD 13): E1-E7 tables and figures, demo cases and SUMMARY.md."""
+    from pathlib import Path
+
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.evaluation import EvalContext, run_evaluation
+    from fallmon.guards import TestLockError, check_frozen
+    from fallmon.reporting import FIGURES_DIR, RESULTS_DIR, TABLES_DIR
+    from fallmon.splits import load_splits
+    from fallmon.verifier import load_params
+
+    if not all_:
+        raise typer.BadParameter("pass --all (individual experiments are not exposed separately)")
+    if split not in ("test", "val"):
+        raise typer.BadParameter("split must be test or val")
+    logging.getLogger("fallmon").setLevel(logging.INFO)
+    cfg = load_config(config)
+    try:
+        frozen_hash = check_frozen(cfg)
+    except TestLockError as exc:
+        typer.echo(f"REFUSED: {exc}", err=True)
+        raise typer.Exit(code=2)
+    if split == "test":
+        out_tables, out_figs, summary, demo = TABLES_DIR, FIGURES_DIR, RESULTS_DIR / "SUMMARY.md", RESULTS_DIR / "demo_cases.json"
+        if summary.exists() and not rerun:
+            typer.echo(f"REFUSED: {summary} exists, the final evaluation has already run. Use --rerun to repeat it "
+                       "(same frozen setup, so results are identical).", err=True)
+            raise typer.Exit(code=2)
+        label = "test"
+    else:
+        base = RESULTS_DIR / "dryrun_val"
+        out_tables, out_figs, summary, demo = base / "tables", base / "figures", base / "SUMMARY.md", base / "demo_cases.json"
+        label = "val-dryrun"
+    ens, scaler = _load_runtime(cfg)
+    ctx = EvalContext(cfg, pd.read_parquet(cfg.dataset.processed_dir / "index.parquet"),
+                      load_splits(cfg.dataset.splits_path), ens, scaler, load_params(cfg), frozen_hash, split,
+                      Path(out_tables), Path(out_figs), Path(summary), Path(demo), label)
+    out = run_evaluation(ctx)
+    typer.echo(Path(summary).read_text())
+    typer.echo(f"Done in {out['seconds']} s. Frozen hash {frozen_hash}")
+
+
+@app.command("demo")
+def demo(
+    case: int = typer.Option(..., "--case", help="Demo case 1-4 (results/demo_cases.json)."),
+    speed: float = typer.Option(5.0, "--speed"),
+    config: str = ConfigOpt,
+) -> None:
+    """Replay a demo case side by side (PRD 15). Available after the final evaluation."""
+    import json
+
+    from fallmon.config import load_config
+    from fallmon.dashboard_data import test_unlocked
+    from fallmon.reporting import RESULTS_DIR
+
+    cfg = load_config(config)
+    if not test_unlocked(cfg):
+        typer.echo("REFUSED: demo cases come from the test split; run `fallmon evaluate --split test --all` first.",
+                   err=True)
+        raise typer.Exit(code=2)
+    cases = json.loads((RESULTS_DIR / "demo_cases.json").read_text())["cases"]
+    c = cases.get(str(case))
+    if not c or not c.get("trial_id"):
+        typer.echo(f"No trial for case {case}: {c['rule'] if c else 'unknown case'}")
+        raise typer.Exit(code=1)
+    typer.echo(f"Case {case}: {c['rule']}")
+    _replay_trial(cfg, c["trial_id"], ["baseline", "proposed"], speed, True, "demo")
 
 
 if __name__ == "__main__":

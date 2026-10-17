@@ -1,0 +1,7 @@
+# frozen_config_sha256: 9b9867ac793ef9c56a5f50ddafd18083936578d1f6fc160605b3b0faf56df956
+post_window_s,sensitivity,fpr_known,fpr_unknown,delay_median_s,delay_p95_s,selected
+1.0,0.0,0.0,0.0,,,False
+1.5,0.8027,0.0025,0.0417,1.88,2.88,True
+2.0,0.8027,0.0865,0.125,2.38,3.22,False
+3.0,0.6267,0.1043,0.0917,3.28,3.786,False
+4.0,0.5413,0.084,0.05,4.28,4.538,False

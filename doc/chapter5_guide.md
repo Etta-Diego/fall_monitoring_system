@@ -35,6 +35,15 @@ Agents add points here as they come up during the build. Each point should link 
 - **Which evidence separates falls from fall-like activity** (Phase 4, validation rule pass rates). Among events reaching the verifier, the impact rule passed for 5% of known-ADL events vs 59% of fall-trial events; orientation change 26% vs 79%; post-impact stillness 86% vs 77% (people are often still after normal activities too, so stillness alone separates poorly). Confirm with E3 on the test split.
 - **Cost of verification is time** (Phase 4). The proposed alert comes a median 1.84 s after the impact on validation (baseline −1.23 s, i.e. often before the fall). Discuss whether ~2 s is acceptable for elderly-care response, where help typically takes minutes.
 
+### Final (test split) discussion points, Phase 6 (X-010)
+- **Answer to the research question.** Post-event temporal verification cut false alerts by 99.0% (618 → 6; 225.8 → 2.19 per hour), including on unseen fall-like activities (FPR unknown 1.000 → 0.042). The cost was sensitivity, 1.000 → 0.803, and about 1.9 s of decision delay after the impact (median), with ~0.2 ms extra processing per decision. Both differences are statistically significant (McNemar).
+- **Is the trade-off worth it?** At 225.8 false alerts per hour the baseline is unusable as an alarm (it alerts on 96% of normal trials), so its "100% sensitivity" has little practical value; also 44.5% of its fall alerts came before the fall. The proposed system is usable in principle but misses one fall in five here. Discuss which error is worse in elderly care (missed fall vs alarm fatigue), and that a missed fall in a real deployment has serious consequences.
+- **Why recall dropped from validation to test.** 73 of 74 missed falls were rejected only because the impact was below 3.0 g (median 2.17 g); orientation and stillness evidence was present. Misses cluster in two subjects (SA23 47%, SE06 33% missed) and in low-energy fall types (falls while sitting down or from sitting). The threshold was chosen on 4 validation subjects with harder falls: a small-sample generalisation problem, made visible because the test split was held out properly.
+- **SE06 is a judo expert**: trained break-falls reduce impact, so the elderly-subgroup sensitivity (0.667) says more about this one person than about older adults.
+- **Remaining false alerts are physically fall-like.** 5 of 6 are D11 "collapse into a chair", which has an impact and a posture change. Rules based on impact/orientation/stillness cannot fully separate these; context (e.g. a chair) or more features would be needed.
+- **Confidence alone is weak** (E2): per-step AUROC 0.684 (falls) and 0.634 (unknown ADLs); per trial, unknown ADLs are not less confident than known ADLs (AUROC 0.420). This supports the thesis claim that OOD confidence needs a second, physical check.
+- **The rest rule never contributed** (D-013); the effective verifier used impact + orientation + stillness.
+
 ## Recommendations and future work (added during the build)
 
 Starting points already implied by the PRD's scope:
@@ -43,5 +52,7 @@ Starting points already implied by the PRD's scope:
 - Explainability of alert decisions beyond the rule trace.
 - Adapting to the individual user (feedback, personalised thresholds).
 - Better-calibrated confidence for the first stage (temperature scaling, energy-based or distance-based OOD scores) instead of raw max-softmax (Phase 2 finding).
+- Make the impact rule adaptive or less dominant: e.g. lower or subject-normalised impact thresholds, or allow strong orientation + stillness evidence to verify without a hard impact; choose it with more validation subjects (Phase 6: 73/74 misses were sub-threshold impacts).
+- Use cross-validation over subjects (or more subjects) when tuning, so thresholds do not depend on a few people (Phase 6).
 - Revisit the post-interval design so the rest rule can contribute at short post windows (e.g. start the post interval earlier), chosen on validation data (Phase 4, D-013).
 - Labelling continuous recordings by motion state (still / transition / activity) rather than one label per trial (Phase 2 finding, D-009).
