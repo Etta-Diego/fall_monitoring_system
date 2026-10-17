@@ -38,8 +38,8 @@ st.set_page_config(page_title="Fall Monitoring (simulated)", layout="wide")
 
 
 @st.cache_resource
-def _runtime():
-    cfg = load_config(os.environ.get("FALLMON_CONFIG"))  # optional override, e.g. for tests
+def _runtime(config_path: str | None):
+    cfg = load_config(config_path)
     ens, meta = DeepTimeEnsemble.load(Path("models"))
     return cfg, ens, Scaler.load(meta["scaler_path"]), load_params(cfg)
 
@@ -103,6 +103,11 @@ def _verification_state(proc: StreamProcessor) -> str:
 
 def page_live_replay(cfg, ens, scaler, params) -> None:
     st.header("Live Replay")
+    if not dd.raw_data_available(cfg):
+        st.error("The raw SisFall data is not in this copy, so trials cannot be replayed. The Event Details, Logs "
+                 "and Results pages still work. To enable Live Replay, run this once in the project folder:")
+        st.code(dd.DATASET_CLONE_CMD, language="bash")
+        return
     index, splits = _index_and_splits(str(cfg.dataset.processed_dir), str(cfg.dataset.splits_path))
     unlocked = dd.test_unlocked(cfg)
     trials = dd.replayable_trials(index, splits, unlocked)
@@ -254,7 +259,7 @@ def page_results() -> None:
 
 def main() -> None:
     st.warning(BANNER)
-    cfg, ens, scaler, params = _runtime()
+    cfg, ens, scaler, params = _runtime(os.environ.get("FALLMON_CONFIG"))  # optional config override (tests)
     page = st.sidebar.radio("Page", ["Live Replay", "Event Details", "Logs", "Results"])
     st.sidebar.caption(BANNER)
     if page == "Live Replay":

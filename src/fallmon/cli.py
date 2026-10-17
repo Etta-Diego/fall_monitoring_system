@@ -128,6 +128,12 @@ def _replay_trial(cfg, trial: str, modes: list[str], speed: float, realtime: boo
     from fallmon.stream_simulator import StreamSimulator
     from fallmon.verifier import load_params
 
+    from fallmon.dashboard_data import DATASET_CLONE_CMD, raw_data_available
+
+    if not raw_data_available(cfg):
+        typer.echo(f"The raw SisFall data is missing ({cfg.dataset.raw_dir}). Download it once with:\n  "
+                   f"{DATASET_CLONE_CMD}", err=True)
+        raise typer.Exit(code=2)
     index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
     row = index.loc[trial]
     ens, scaler = _load_runtime(cfg)
@@ -171,7 +177,10 @@ def stream(
     realtime: bool = typer.Option(True, "--realtime/--fast", help="Pace to wall clock, or run as fast as possible."),
     config: str = ConfigOpt,
 ) -> None:
-    """Replay one trial through the stream processor, print decisions and log to SQLite."""
+    """Replay one trial through the stream processor, print decisions and log to SQLite.
+
+    Test-split trials are allowed only after the final evaluation (`fallmon evaluate --split test --all`).
+    """
     import pandas as pd
 
     from fallmon.config import load_config
@@ -182,7 +191,10 @@ def stream(
     index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
     if trial not in index.index:
         raise typer.BadParameter(f"unknown trial id {trial!r}")
-    assert_not_test([index.loc[trial, "subject_id"]], load_splits(cfg.dataset.splits_path), "stream")
+    from fallmon.dashboard_data import test_unlocked
+
+    if not test_unlocked(cfg):  # after the final evaluation, test trials may be replayed (e.g. for presentations)
+        assert_not_test([index.loc[trial, "subject_id"]], load_splits(cfg.dataset.splits_path), "stream")
     modes = ["baseline", "proposed"] if mode == "both" else [mode]
     _replay_trial(cfg, trial, modes, speed or cfg.stream.default_speed, realtime, "adhoc")
 

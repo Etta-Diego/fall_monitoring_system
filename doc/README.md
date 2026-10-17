@@ -1,5 +1,7 @@
 # Thesis documentation (Chapters 4 and 5)
 
+The project's main `README.md` (repository root) explains how to run and reproduce everything; this folder holds the thesis material.
+
 This folder is written **while the system is built**. It holds what you need to write Chapter 4 and Chapter 5 of the thesis: decisions and the reasons for them, verified dataset facts, every result with its source file, limitations, and failure cases.
 
 Generated tables and figures live in `results/`. This folder explains them and says where each one belongs in the thesis.

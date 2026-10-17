@@ -92,3 +92,20 @@ def test_dashboard_app_side_by_side_replay(tmp_path, monkeypatch):
     assert not at.exception
     assert any("Replay finished" in s.value for s in at.success)
     assert dd.list_runs(tmp_path / "dash.db")["mode"].tolist().count("proposed") == 1
+
+
+def test_live_replay_explains_missing_raw_data(tmp_path, monkeypatch):
+    if not Path("models/verifier_config.json").exists() or not Path("data/processed/index.parquet").exists():
+        pytest.skip("needs trained models and the dataset index")
+    from streamlit.testing.v1 import AppTest
+
+    raw = yaml.safe_load(DEFAULT_CONFIG_PATH.read_text())
+    raw["dataset"]["raw_dir"] = str(tmp_path / "no_raw_here")
+    raw["logging"]["db_path"] = str(tmp_path / "dash.db")
+    cfg_path = tmp_path / "cfg.yaml"
+    cfg_path.write_text(yaml.safe_dump(raw))
+    monkeypatch.setenv("FALLMON_CONFIG", str(cfg_path))
+    at = AppTest.from_file(str(Path("app/dashboard.py").resolve()), default_timeout=60).run()
+    assert not at.exception
+    assert any("raw SisFall data is not in this copy" in e.value for e in at.error)
+    assert any("git clone" in c.value for c in at.code)

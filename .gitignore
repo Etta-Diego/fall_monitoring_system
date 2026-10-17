@@ -10,14 +10,10 @@ venv/
 # Secrets
 .env
 
-# Dataset and caches (data/splits.json IS committed)
+# Raw SisFall dataset is not committed (download command in README). data/processed and logs ARE committed.
 data/raw/
-data/processed/
 
 # Trained models are committed (small; needed to reproduce the frozen results, D-015)
-
-# Runtime logs / SQLite
-logs/
 
 # Editors / OS
 .vscode/

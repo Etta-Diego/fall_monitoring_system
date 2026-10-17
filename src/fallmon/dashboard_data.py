@@ -12,6 +12,8 @@ from fallmon.config import Config
 from fallmon.guards import TestLockError, check_frozen
 
 SUMMARY_PATH = Path("results/SUMMARY.md")
+DATASET_CLONE_CMD = ("git clone https://github.com/Fall-Prevention-Team/sisfallData.git data/raw/SisFall_dataset "
+                     "&& git -C data/raw/SisFall_dataset checkout 8352a0f")
 LOG_TABLES = {"Activity log": "activity_log", "Unknown activity log": "unknown_activity_log", "Alert log": "alert_log"}
 # feature -> (rule, verifier-params key, comparison)
 RULE_OF_FEATURE = {
@@ -31,6 +33,11 @@ def test_unlocked(cfg: Config) -> bool:
     except (TestLockError, FileNotFoundError):
         return False
     return True
+
+
+def raw_data_available(cfg: Config) -> bool:
+    """Replays need the raw SisFall files; results, events and logs do not."""
+    return (Path(cfg.dataset.raw_dir) / "SA01").is_dir()
 
 
 def replayable_trials(index: pd.DataFrame, splits: dict, unlocked: bool) -> pd.DataFrame:

@@ -134,3 +134,10 @@ Entry format:
 - Context: PRD 4 listed `models/` as gitignored except metadata. But the definition of done (PRD 19) requires `fallmon evaluate --split test --all` to regenerate every table and figure from a clean clone plus the dataset, and the test lock checks the SHA-256 of the weight files. Retraining on another machine is not guaranteed to be bit-identical, so the hashes would differ and the evaluation would (correctly) refuse.
 - Decision: commit `models/dte_w*.pt` (≈ 109 KB each) and the archived `models/as_specified/*.pt`. A clean clone plus the dataset now reproduces the frozen setup (hash `9b9867ac…f956`) and the final results exactly.
 - Effect: no change to any result.
+
+## D-016: Handover packaging: everything in git except the raw dataset
+- Date / phase: 2026-10-17 / Phase 7. Developer's decision.
+- Decision: commit `data/processed/index.parquet` and `logs/fallmon.db` (all runs, including the official test runs X-010/X-011) in addition to models and results (D-015). The raw SisFall data (931 MB) stays out of git; README section 4.1 gives one command that clones the exact copy (commit `8352a0f`) into `data/raw/SisFall_dataset`.
+- Without raw data: the Results, Event Details and Logs pages, SUMMARY, tables and figures all work. Live replays (dashboard Live Replay, `fallmon demo`, `fallmon stream`) and `evaluate --rerun` need the raw files; the dashboard and CLI show the clone command instead of failing.
+- After the final evaluation, `fallmon stream` accepts test-split trials (as the dashboard already did), so the student can present any trial. The test lock still governs `evaluate` (frozen hash) and applied fully until the final evaluation was done.
+- Note: `logs/fallmon.db` grows with every new replay, so presentations will show it as modified in git; that is expected.

@@ -123,3 +123,8 @@ Entry format:
 - Key results (trial level, 95% CI): baseline sensitivity 1.000, FPR known 0.962 [0.942, 0.980], FPR unknown 1.000, precision 0.430, F1 0.601, 618 false alerts (225.8/h); proposed sensitivity 0.803 [0.760, 0.842], FPR known 0.003 [0.000, 0.008], FPR unknown 0.042 [0.009, 0.083], precision 0.980, F1 0.883, 6 false alerts (2.19/h). False-alert reduction 0.990. McNemar falls p = 1.059e-22, non-falls p = 1.564e-148. Delay median −1.40 s vs +1.88 s. Latency mean 1.66 vs 1.84 ms. E1 accuracy 0.8739, macro F1 0.8412. E2 AUROC per step known vs falls 0.684, known vs unknown 0.634 (per trial 0.420).
 - Source files: `results/SUMMARY.md`, `results/tables/e*.{md,csv}`, `results/tables/trial_outcomes_{baseline,proposed}.*`, `results/figures/e*.png`, `results/figures/demo_case_*.png`, `results/demo_cases.json`; stream runs in `logs/fallmon.db` (split `test`)
 - Notes: proposed sensitivity on test (0.803) is well below validation (0.960); 73/74 misses had the impact below 3.0 g; misses concentrated in SA23 and SE06. See `phase_reports/phase6_final_evaluation.md`.
+
+## X-011: Reproducibility rerun of the final evaluation
+- Date / phase: 2026-10-17 / Phase 7
+- Command: `fallmon evaluate --split test --all --rerun` (579 s), same frozen hash
+- Result: all metrics, CIs, p-values, outcomes and demo choices identical to X-010; only run ids and wall-clock latency differ (mean 1.608 / 1.811 ms, p95 2.203 / 2.753 ms vs X-010 1.660 / 1.841 and 2.206 / 2.816 ms). X-010 files kept in `results/`.
