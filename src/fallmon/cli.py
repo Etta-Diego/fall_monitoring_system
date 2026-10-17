@@ -103,5 +103,125 @@ def train(config: str = ConfigOpt) -> None:
     typer.echo(f"Saved models to models/ in {meta['training_seconds']} s")
 
 
+def _load_runtime(cfg):
+    """Trained ensemble + scaler from models/."""
+    from pathlib import Path
+
+    from fallmon.dte import DeepTimeEnsemble
+    from fallmon.preprocessing import Scaler
+
+    ens, meta = DeepTimeEnsemble.load(Path("models"))
+    return ens, Scaler.load(meta["scaler_path"])
+
+
+@app.command("stream")
+def stream(
+    trial: str = typer.Option(..., "--trial", help="Trial id, e.g. F05_SA01_R01."),
+    mode: str = typer.Option("baseline", "--mode", help="baseline | proposed | both"),
+    speed: float = typer.Option(None, "--speed", help="Replay speed (1 = real time). Default: stream.default_speed."),
+    realtime: bool = typer.Option(True, "--realtime/--fast", help="Pace to wall clock, or run as fast as possible."),
+    config: str = ConfigOpt,
+) -> None:
+    """Replay one trial through the stream processor, print decisions and log to SQLite."""
+    from pathlib import Path
+
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.data_loader import load_trial
+    from fallmon.guards import assert_not_test
+    from fallmon.notifier import build_notifier
+    from fallmon.pipeline import StreamProcessor
+    from fallmon.reporting import DATA_SOURCE
+    from fallmon.splits import load_splits
+    from fallmon.storage import Storage
+    from fallmon.stream_simulator import StreamSimulator
+
+    cfg = load_config(config)
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
+    if trial not in index.index:
+        raise typer.BadParameter(f"unknown trial id {trial!r}")
+    row = index.loc[trial]
+    assert_not_test([row["subject_id"]], load_splits(cfg.dataset.splits_path), "stream")
+    modes = ["baseline", "proposed"] if mode == "both" else [mode]
+
+    ens, scaler = _load_runtime(cfg)
+    storage = Storage(cfg.logging.db_path)
+    notifier = build_notifier(cfg)
+    procs = {m: StreamProcessor(m, cfg, ens, scaler, storage, notifier,
+                                storage.start_run(m, "adhoc", cfg.model_dump())) for m in modes}
+    speed = speed or cfg.stream.default_speed
+    typer.echo(f"Data source: {DATA_SOURCE}. No physical device.")
+    typer.echo(f"Trial {trial} ({row['activity_group'].replace('_', ' ')}), mode {mode}, speed {speed}x")
+    for m, p in procs.items():
+        typer.echo(f"  run {m}: {p.run_id}")
+
+    sim = StreamSimulator([load_trial(Path(cfg.dataset.raw_dir) / row["path"], cfg)], speed=speed, realtime=realtime)
+    for sample in sim:
+        for m, p in procs.items():
+            for d in p.push(sample):
+                flag = "OOD" if d.is_ood else "   "
+                typer.echo(f"[{m:<8}] {d.t_s:6.2f} s  {d.predicted_activity:<10} conf {d.confidence:.3f} {flag} "
+                           f"{d.status:<8} {d.latency_ms:6.2f} ms" + ("  <- ALERT" if d.new_alert else ""))
+    for p in procs.values():
+        p.finish()
+    storage.close()
+    typer.echo(f"Logged to {cfg.logging.db_path}")
+
+
+@app.command("batch")
+def batch(
+    split: str = typer.Option("val", "--split", help="train | val (test is locked until Phase 6)"),
+    mode: str = typer.Option("baseline", "--mode", help="baseline | proposed | both"),
+    config: str = ConfigOpt,
+) -> None:
+    """Replay every known-ADL and fall trial of a split as fast as possible; report alert rates and latency."""
+    from pathlib import Path
+
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.data_loader import load_trial
+    from fallmon.guards import assert_not_test
+    from fallmon.notifier import build_notifier
+    from fallmon.pipeline import StreamProcessor, run_batch, summarise_batch
+    from fallmon.reporting import write_table
+    from fallmon.splits import load_splits
+    from fallmon.storage import Storage
+
+    cfg = load_config(config)
+    splits = load_splits(cfg.dataset.splits_path)
+    if split not in ("train", "val"):
+        raise typer.BadParameter("only train or val before Phase 6")
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet")
+    # Unknown ADLs are excluded everywhere except the final test evaluation (PRD 7.2).
+    rows = index[index["subject_id"].isin(splits[split]) & index["activity_group"].isin(["known_adl", "fall"])]
+    assert_not_test(rows["subject_id"], splits, "batch")
+    modes = ["baseline", "proposed"] if mode == "both" else [mode]
+
+    ens, scaler = _load_runtime(cfg)
+    storage = Storage(cfg.logging.db_path)
+    for m in modes:
+        run_id = storage.start_run(m, split, cfg.model_dump())
+        notifier = build_notifier(cfg) if cfg.notifier.enabled_in_eval else None  # off by default (PRD 12.4)
+        proc = StreamProcessor(m, cfg, ens, scaler, storage, notifier, run_id)
+        trials = (load_trial(Path(cfg.dataset.raw_dir) / p, cfg) for p in rows["path"])
+        decisions = run_batch(trials, proc)
+        table, stats = summarise_batch(decisions, index)
+        notes = (f"Run {run_id}. {split} split, known ADLs and falls only (unknown ADLs excluded). "
+                 f"A trial counts as alerted if at least one ALERT was emitted. "
+                 f"Step OOD rate known {stats['step_ood_rate_known_adl']:.4f}, fall {stats['step_ood_rate_fall']:.4f}. "
+                 f"Latency per decision step: mean {stats['latency_ms_mean']:.2f} ms, "
+                 f"p95 {stats['latency_ms_p95']:.2f} ms, max {stats['latency_ms_max']:.2f} ms "
+                 f"over {stats['decision_steps']} steps.")
+        write_table(table, f"phase3_batch_{split}_{m}", f"Batch replay, {m} mode ({split} split, development evidence)",
+                    notes)
+        typer.echo(f"\n[{m}] run {run_id}")
+        typer.echo(table.to_string(index=False))
+        for k, v in stats.items():
+            typer.echo(f"  {k:<26} {v:.4f}" if isinstance(v, float) else f"  {k:<26} {v}")
+    storage.close()
+
+
 if __name__ == "__main__":
     app()

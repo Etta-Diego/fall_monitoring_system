@@ -89,3 +89,22 @@ Entry format:
 - Effect on fairness: the same DTE serves both baseline and proposed modes, so the comparison is still "same detector, with vs without verification". Falls and unknown ADLs remain unseen in training (guard 2 checks activity codes, unaffected by relabelling).
 - Deviation from Roy et al.: their per-activity labelling is replaced. This must be stated in Chapter 4.5 and the limitations. The as-specified variant stays reproducible with `label_scheme: activity`; its models and tables are archived in `models/as_specified/` and `results/*/as_specified/`.
 - Evidence: X-002 (as specified), X-003 (this scheme).
+
+## D-010: Phase 3 implementation details not fixed by the PRD
+- Date / phase: 2026-10-17 / Phase 3
+- Decisions:
+  1. **Extra decision status `COOLDOWN`** for an OOD step that cannot open an event because an alert was raised less than `cooldown_s` ago. PRD 12.2 lists only KNOWN/HOLD/ALERT/REJECTED; without this, such steps would be mislabelled.
+  2. **`new_alert` flag** on the decision record, true only on the step where an alert is emitted. Steps that merely belong to an alerted event carry status ALERT, so counting statuses would over-count alerts.
+  3. **`t_close_s` column** added to `events` (PRD 12.3 schema), so event duration is recorded.
+  4. **Latency** = time from receiving the raw sample that completes a decision step to the decision being produced (inference + event logic). Database and notification I/O are excluded, since they are not part of the decision.
+  5. **Activity log** is flushed when an event opens, so activity before an event is not logged with a timestamp after it.
+  6. **Interim test lock:** `stream` and `batch` refuse test-split subjects until the frozen-config unlock exists (Phase 5).
+  7. **Decision time** of a step = end of its window at 50 Hz (n / 50 s), the same convention as offline evaluation.
+- Effect: none on results. Item 4 defines what E7 measures.
+
+## D-011: Secondary baseline at the validation-calibrated threshold (reporting only)
+- Date / phase: 2026-10-17 / after Phase 3. Approved by the developer.
+- Context: at the fixed threshold 0.9 the baseline alerts on ~97% of validation known-ADL trials (X-003, X-004). An examiner may ask whether the false-alert reduction would survive a better-tuned baseline.
+- Decision: Phase 6 also reports the baseline (and, for the same threshold, the proposed system) at the threshold giving 95% TPR on **validation** known-ADL steps: 0.4901, stored in `models/dte_meta.json` (`val_metrics.ood.threshold_at_95tpr_val_known`). Config switch `evaluation.report_calibrated_baseline: true`.
+- Primary results stay at 0.9 (D-002). The calibrated threshold comes from validation data only and is fixed before the test split is unlocked.
+- Effect: adds rows to E2/E4; no change to models or tuning.

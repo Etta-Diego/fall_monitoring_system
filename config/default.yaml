@@ -99,4 +99,7 @@ notifier:
 
 evaluation:
   bootstrap_resamples: 1000
+  # Also report the baseline at the validation-calibrated threshold (95% TPR on val known ADLs,
+  # read from models/dte_meta.json). Secondary, reporting only; 0.9 stays the primary threshold (D-011).
+  report_calibrated_baseline: true
   sweep_post_window_s: [1.0, 1.5, 2.0, 3.0, 4.0]

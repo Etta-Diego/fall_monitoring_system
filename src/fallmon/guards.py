@@ -38,3 +38,17 @@ def assert_scaler_fit_on_train(scaler_meta: dict, splits: dict) -> None:
     outside = fit_subjects - set(splits["train"])
     if outside:
         raise LeakageError(f"scaler was fitted on subjects outside the train split: {sorted(outside)}")
+
+
+class TestLockError(RuntimeError):
+    """Raised when test-split data is requested before the test split is unlocked (PRD 11.5)."""
+
+
+def assert_not_test(subject_ids, splits: dict, context: str) -> None:
+    """Refuse to touch test-split subjects. The frozen-config unlock for Phase 6 is added in Phase 5."""
+    locked = sorted(set(subject_ids) & set(splits["test"]))
+    if locked:
+        raise TestLockError(
+            f"{context}: subjects {locked} are in the test split, which is locked until Phase 6 "
+            "(run `fallmon freeze` first; see PRD Section 11)."
+        )

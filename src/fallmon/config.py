@@ -168,6 +168,7 @@ class NotifierConfig(_Strict):
 
 class EvaluationConfig(_Strict):
     bootstrap_resamples: int = Field(gt=0)
+    report_calibrated_baseline: bool
     sweep_post_window_s: list[float]
 
 

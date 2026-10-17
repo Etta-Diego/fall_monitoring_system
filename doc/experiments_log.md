@@ -65,3 +65,12 @@ Entry format:
   - At the calibrated threshold 0.490 (k=1): known-ADL trials alerted 66.9%, fall trials 83.3%.
   - Remaining low-confidence known steps cluster in sit/stand/bend/jump trials (D07 median confidence 0.678, D15 0.656), at moving-to-still transitions where the 1 s model sees "static" and the 3 s model still sees movement.
 - Source files: `models/dte_meta.json`, `models/dte_history.json`, `results/tables/phase2_dte_val.*`, `results/tables/phase2_ood_val.*`, `results/figures/phase2_training_curves.png`, `results/figures/phase2_val_confidence_hist.png`. X-002 outputs in the `as_specified/` subfolders.
+
+## X-004: Baseline batch replay on validation (stream pipeline)
+- Date / phase: 2026-10-17 / Phase 3
+- Command: `fallmon batch --split val --mode baseline`
+- Split(s) used: val, known ADLs and falls (unknown ADLs excluded)
+- Config / hash: base commit d42a0d7 + uncommitted Phase 3 code; models from X-003; run `20261017T055454-baseline-765f17`
+- Key results: alerted trials known ADL 370/381 (0.9711), fall 300/300 (1.0000); 496 / 320 alerts. Step OOD rate known 0.3649, fall 0.4729 (identical to X-003 offline). Latency mean 1.746 ms, p95 2.589 ms, max 61.3 ms over 21,748 steps. Wall time 3 min 49 s.
+- Fall alert timing (ad hoc): first alert minus impact (argmax Am) median −1.23 s (p5 −4.59, p95 +0.96); 44.0% of fall trials first alerted > 1.5 s before impact; 20 trials with 2 alerts.
+- Source files: `results/tables/phase3_batch_val_baseline.*`, `logs/fallmon.db` (run id above)
