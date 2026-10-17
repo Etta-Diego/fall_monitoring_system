@@ -41,6 +41,9 @@ Fill in as files are generated. "Split" must be stated for every row.
 | 4.4 | `results/tables/dataset_summary.md` | all (counts only) | 1 | 4,505 trials, 38 subjects |
 | 4.4 | `results/tables/splits_summary.md` | all (counts only) | 1 | seed 42, SE06 forced to test |
 | 4.4 | `results/figures/phase1_examples.png` | train (SA01) | 1 | fall F01 vs known D07 vs unknown D10 |
+| 4.5 | `results/figures/phase2_training_curves.png` | train/val | 2 | development evidence |
+| 4.5 | `results/tables/phase2_dte_val.md`, `phase2_ood_val.md`, `results/figures/phase2_val_confidence_hist.png` | val | 2 | grouped + static (X-003); development evidence |
+| 4.5 | same files under `results/*/as_specified/` | val | 2 | as-specified labels (X-002), for the D-009 justification |
 | 4.10 E1 | `results/tables/e1_classification.md`, `results/figures/e1_confusion_matrix.png` | test | 6 | |
 | 4.10 E2 | `results/tables/e2_ood.md`, `results/figures/e2_confidence_hist_by_group.png`, `e2_roc.png` | test | 6 | |
 | 4.10 E3 | `results/tables/e3_verifier.md`, `e3_verifier_features_by_group.png`, `e3_confusion.png` | test | 6 | |

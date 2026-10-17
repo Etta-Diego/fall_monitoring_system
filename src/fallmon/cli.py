@@ -16,7 +16,9 @@ ConfigOpt = typer.Option(None, "--config", help="Path to a YAML config file (def
 
 @app.callback()
 def main(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    logging.basicConfig(level=logging.INFO if verbose else logging.WARNING, format="%(levelname)s %(message)s")
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
+    if verbose:
+        logging.getLogger("fallmon").setLevel(logging.INFO)
 
 
 @app.command("show-config")
@@ -74,6 +76,31 @@ def prepare_data(
 
     fig_path = plot_examples(index, splits, cfg)
     typer.echo(f"Saved {fig_path}")
+
+
+@app.command("train")
+def train(config: str = ConfigOpt) -> None:
+    """Fit the scaler and train the three DTE models on train-split known ADLs (early stopping on val)."""
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.splits import load_splits
+    from fallmon.train import run_training
+
+    logging.getLogger("fallmon").setLevel(logging.INFO)
+    cfg = load_config(config)
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet")
+    splits = load_splits(cfg.dataset.splits_path)
+    meta = run_training(index, splits, cfg)
+
+    vm = meta["val_metrics"]
+    typer.echo("\nValidation results (development evidence, not final):")
+    for row in vm["per_model"]:
+        typer.echo(f"  {row['model']:<26} macro F1 {row['val_macro_f1']:.4f}")
+    typer.echo(f"  Ensemble step accuracy     {vm['ensemble_step_accuracy']:.4f}")
+    for k, v in vm["ood"].items():
+        typer.echo(f"  {k:<40} {v:.4f}" if isinstance(v, float) else f"  {k:<40} {v}")
+    typer.echo(f"Saved models to models/ in {meta['training_seconds']} s")
 
 
 if __name__ == "__main__":

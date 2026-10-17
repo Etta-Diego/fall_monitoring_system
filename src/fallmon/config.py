@@ -45,6 +45,7 @@ class ActivitiesConfig(_Strict):
     known_adls: list[str]
     unknown_adls: list[str]
     falls: list[str]
+    class_groups: dict[str, list[str]]
 
     @model_validator(mode="after")
     def _groups_disjoint(self) -> ActivitiesConfig:
@@ -52,6 +53,9 @@ class ActivitiesConfig(_Strict):
         total = sum(len(g) for g in groups)
         if len(set().union(*groups)) != total:
             raise ValueError("activity groups must not overlap")
+        grouped = [c for codes in self.class_groups.values() for c in codes]
+        if sorted(grouped) != sorted(self.known_adls):
+            raise ValueError("class_groups must contain every known ADL exactly once, and nothing else")
         return self
 
     def group_of(self, code: str) -> str:
@@ -85,6 +89,11 @@ class PreprocessingConfig(_Strict):
     channels: list[str]
 
 
+class StaticConfig(_Strict):
+    am_std_g: float = Field(gt=0)
+    gm_mean_dps: float = Field(gt=0)
+
+
 class DTEConfig(_Strict):
     window_lengths_s: list[float]
     train_stride_s: float = Field(gt=0)
@@ -95,6 +104,8 @@ class DTEConfig(_Strict):
     epochs: int = Field(gt=0)
     patience: int = Field(gt=0)
     dropout: float = Field(ge=0, lt=1)
+    label_scheme: Literal["activity", "grouped_static"]
+    static: StaticConfig
 
 
 class OODConfig(_Strict):
@@ -181,9 +192,26 @@ class Config(_Strict):
             raise ValueError("fs_raw must be an integer multiple of target_fs")
         return self
 
+    @model_validator(mode="after")
+    def _durations_are_whole_samples(self) -> Config:
+        fs = self.preprocessing.target_fs
+        durations = {
+            "dte.train_stride_s": self.dte.train_stride_s,
+            "stream.decision_stride_s": self.stream.decision_stride_s,
+            **{f"dte.window_lengths_s[{i}]": w for i, w in enumerate(self.dte.window_lengths_s)},
+        }
+        for name, seconds in durations.items():
+            if abs(seconds * fs - round(seconds * fs)) > 1e-9:
+                raise ValueError(f"{name}={seconds} s is not a whole number of samples at {fs} Hz")
+        return self
+
     @property
     def decimation_factor(self) -> int:
         return self.dataset.fs_raw // self.preprocessing.target_fs
+
+    def samples(self, seconds: float) -> int:
+        """Convert a duration to a whole number of samples at the processed rate (target_fs)."""
+        return round(seconds * self.preprocessing.target_fs)
 
 
 def load_config(path: str | Path | None = None) -> Config:

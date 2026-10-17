@@ -29,3 +29,10 @@ def test_unknown_key_rejected():
     raw["ood"]["thresh"] = 0.5
     with pytest.raises(ValidationError):
         Config.model_validate(raw)
+
+
+def test_fractional_sample_durations_rejected():
+    raw = _raw()
+    raw["dte"]["train_stride_s"] = 0.25  # 12.5 samples at 50 Hz
+    with pytest.raises(ValidationError):
+        Config.model_validate(raw)

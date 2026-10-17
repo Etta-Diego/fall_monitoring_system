@@ -18,6 +18,16 @@ activities:
   known_adls:   [D01, D02, D03, D04, D05, D06, D07, D08, D09, D12, D14, D15, D16, D17, D19]
   unknown_adls: [D10, D11, D13, D18]
   falls:        [F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15]
+  # Coarse training classes for dte.label_scheme = grouped_static (D-009). Every known ADL must appear once.
+  class_groups:
+    walking:   [D01, D02]
+    jogging:   [D03, D04]
+    stairs:    [D05, D06]
+    sit_stand: [D07, D08, D09]
+    lying:     [D12, D14]
+    bending:   [D15, D16]
+    car:       [D17]
+    jump:      [D19]
 
 split:
   young:   {train: 15, val: 4, test: 4}
@@ -33,7 +43,7 @@ preprocessing:
 
 dte:
   window_lengths_s: [1.0, 2.0, 3.0]
-  train_stride_s: 0.25
+  train_stride_s: 0.24     # 12 samples at 50 Hz; PRD 0.25 s = 12.5 samples (D-008)
   max_windows_per_trial: 200
   batch_size: 128
   lr: 0.001
@@ -41,6 +51,12 @@ dte:
   epochs: 40
   patience: 6
   dropout: 0.3
+  # activity: one class per known-ADL code (PRD 8.1, as specified).
+  # grouped_static: class_groups, plus a shared "static" class for still windows (D-009).
+  label_scheme: grouped_static
+  static:                  # a window is "static" if both hold (physical units, whole window)
+    am_std_g: 0.02         # std of Am below this
+    gm_mean_dps: 10.0      # mean of Gm below this
 
 ood:
   threshold: 0.9

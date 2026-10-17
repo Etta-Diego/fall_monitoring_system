@@ -1,0 +1,147 @@
+{
+  "classes": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D12",
+    "D14",
+    "D15",
+    "D16",
+    "D17",
+    "D19"
+  ],
+  "window_lengths_s": [
+    1.0,
+    2.0,
+    3.0
+  ],
+  "window_samples": [
+    50,
+    100,
+    150
+  ],
+  "channels": [
+    "ax",
+    "ay",
+    "az",
+    "gx",
+    "gy",
+    "gz",
+    "Am",
+    "Gm"
+  ],
+  "dropout": 0.3,
+  "target_fs": 50,
+  "scaler_path": "models/scaler.json",
+  "scaler_fit_subjects": [
+    "SA01",
+    "SA02",
+    "SA03",
+    "SA04",
+    "SA05",
+    "SA06",
+    "SA09",
+    "SA10",
+    "SA12",
+    "SA13",
+    "SA14",
+    "SA15",
+    "SA20",
+    "SA21",
+    "SA22",
+    "SE01",
+    "SE02",
+    "SE03",
+    "SE04",
+    "SE08",
+    "SE09",
+    "SE10",
+    "SE12",
+    "SE13"
+  ],
+  "train_subjects": [
+    "SA01",
+    "SA02",
+    "SA03",
+    "SA04",
+    "SA05",
+    "SA06",
+    "SA09",
+    "SA10",
+    "SA12",
+    "SA13",
+    "SA14",
+    "SA15",
+    "SA20",
+    "SA21",
+    "SA22",
+    "SE01",
+    "SE02",
+    "SE03",
+    "SE04",
+    "SE08",
+    "SE09",
+    "SE10",
+    "SE12",
+    "SE13"
+  ],
+  "seed": 42,
+  "git_hash": "782f8a512941ec03ef8752a544fa503d551ff4d5-dirty",
+  "val_metrics": {
+    "per_model": [
+      {
+        "model": "CNN 1.0 s",
+        "train_windows": 91998,
+        "val_windows": 26464,
+        "epochs_run": 21,
+        "best_epoch": 15,
+        "val_macro_f1": 0.5485
+      },
+      {
+        "model": "CNN 2.0 s",
+        "train_windows": 86813,
+        "val_windows": 24964,
+        "epochs_run": 24,
+        "best_epoch": 18,
+        "val_macro_f1": 0.6423
+      },
+      {
+        "model": "CNN 3.0 s",
+        "train_windows": 81916,
+        "val_windows": 23547,
+        "epochs_run": 20,
+        "best_epoch": 14,
+        "val_macro_f1": 0.7031
+      },
+      {
+        "model": "Ensemble (decision steps)",
+        "train_windows": null,
+        "val_windows": 14249,
+        "epochs_run": null,
+        "best_epoch": null,
+        "val_macro_f1": 0.694
+      }
+    ],
+    "ensemble_step_accuracy": 0.7182960207733876,
+    "ensemble_step_macro_f1": 0.6939684507460532,
+    "ood": {
+      "threshold": 0.9,
+      "val_known_step_ood_rate": 0.5756193417081901,
+      "val_fall_step_ood_rate": 0.7199626616882251,
+      "val_known_trials_with_any_ood_step": 0.9921259842519685,
+      "val_fall_trials_with_any_ood_step": 1.0,
+      "val_auroc_known_vs_fall_step": 0.5590140210146718,
+      "val_auroc_known_vs_fall_trial_min_conf": 0.37984251968503946,
+      "threshold_at_95tpr_val_known": 0.265384316444397,
+      "median_conf_val_known": 0.827235758304596,
+      "median_conf_val_fall": 0.7001902461051941
+    }
+  },
+  "training_seconds": 1500.2
+}

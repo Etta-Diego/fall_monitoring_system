@@ -62,3 +62,30 @@ Entry format:
 - Decision: use `Fall-Prevention-Team/sisfallData` (commit `8352a0f`), cross-checked against the Hugging Face mirror. Cite the MDPI paper (Sucerquia et al., 2017) in the thesis.
 - Effect: 4,505 files instead of the 4,510 stated in the readme; both mirrors agree, so this reflects the original distribution.
 - Evidence: `dataset_notes.md`.
+
+## D-007: Baseline DTE is a reimplementation from the paper
+- Date / phase: 2026-10-16 / Phase 2
+- Context: PRD 8 asks to adapt the official code of Roy et al. (2023) if any exists.
+- Finding: no official code found. Searched the web for the paper title and authors (Roy, Komini, Girdzijauskas, *AI Communications* 36(4), 2023, DOI 10.3233/AIC-220205). The group's related Zenodo record 8079816 ("Out of distribution in Human Activity Recognition", SAIS 2022) contains only the PDF.
+- Decision: implement the DTE as specified in PRD 8 (three 1D-CNNs on 1, 2 and 3 s windows, mean softmax, max-softmax confidence, threshold 0.9) and state in the README and thesis that it is a reimplementation from the paper's description.
+- Effect: architecture and training details may differ from the original; any gap with the paper's reported numbers is a limitation, not hidden.
+
+## D-008: Training stride 0.24 s instead of 0.25 s
+- Date / phase: 2026-10-16 / Phase 2
+- Context: PRD default `dte.train_stride_s: 0.25` is 12.5 samples at 50 Hz, which cannot be used as a window step.
+- Decision: 0.24 s (12 samples). The config validator now rejects any stride or window length that is not a whole number of samples.
+- Alternatives: 0.26 s (13 samples); rounding silently in code (rejected: hides the real value used).
+- Effect: ~4% more training windows than 0.25 s would give. Training stride only; it does not affect decision stride (0.5 s = 25 samples) or anything at run time.
+
+## D-009: Coarse activity groups plus a shared "static" class for DTE training labels
+- Date / phase: 2026-10-17 / Phase 2. Chosen by the developer (option A) after the as-specified run X-002.
+- Context: with one label per activity code (PRD 8.1), windows where the person is simply standing or sitting still carry six different labels (D07, D08, D09, D15, D16, D17...). The DTE cannot be confident on them, so 99.2% of validation known-ADL trials had a step below the 0.9 threshold, and the trial-level AUROC for falls was 0.380 (X-002, `phase_reports/phase2_baseline_dte.md`). The baseline would alarm on almost every normal activity, making the comparison with the proposed system meaningless.
+- Decision (`dte.label_scheme: grouped_static`):
+  1. Known-ADL codes are merged into 8 coarse groups (`activities.class_groups`): walking (D01, D02), jogging (D03, D04), stairs (D05, D06), sit_stand (D07, D08, D09), lying (D12, D14), bending (D15, D16), car (D17), jump (D19).
+  2. Any training window where the person is still for the whole window, meaning std(Am) < 0.02 g **and** mean(Gm) < 10 °/s (`dte.static`), is labelled `static`, whatever its activity.
+  So 9 classes in total. The confidence rule, threshold 0.9, architecture and training procedure are unchanged.
+- How the thresholds were chosen: from **train-split** known-ADL 1 s windows only. With these values no walking/jogging window is static, and 41–61% of sit/lie/bend/car/jump windows are, which is what "standing or sitting still" should look like. Not tuned against any OOD or fall outcome.
+- Alternatives considered: (B) keep per-code labels and report a near-100% baseline false-alarm rate; (C) lower the threshold (would need 0.265 for 95% TPR on val; rejected, 0.9 is cited in the thesis and fixed for fairness, D-002).
+- Effect on fairness: the same DTE serves both baseline and proposed modes, so the comparison is still "same detector, with vs without verification". Falls and unknown ADLs remain unseen in training (guard 2 checks activity codes, unaffected by relabelling).
+- Deviation from Roy et al.: their per-activity labelling is replaced. This must be stated in Chapter 4.5 and the limitations. The as-specified variant stays reproducible with `label_scheme: activity`; its models and tables are archived in `models/as_specified/` and `results/*/as_specified/`.
+- Evidence: X-002 (as specified), X-003 (this scheme).

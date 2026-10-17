@@ -1,0 +1,5 @@
+model,train_windows,val_windows,epochs_run,best_epoch,val_macro_f1
+CNN 1.0 s,91998.0,26464,21.0,15.0,0.5485
+CNN 2.0 s,86813.0,24964,24.0,18.0,0.6423
+CNN 3.0 s,81916.0,23547,20.0,14.0,0.7031
+Ensemble (decision steps),,14249,,,0.694
