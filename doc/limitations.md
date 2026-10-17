@@ -21,6 +21,10 @@ Add an entry as soon as a limitation is found. Do not soften it.
 - **Baseline uses modified labels** (D-009). The baseline is no longer a strict reproduction of Roy et al.'s per-activity labelling. State this in Chapter 4.5; the as-specified variant is reported for transparency (X-002).
 - **High baseline false-alert rate is expected** (Phase 2, validation). Max-softmax confidence at 0.9 flags almost every short known-ADL trial; even at the validation-calibrated threshold 0.49, 67% of val known-ADL trials would alert and 17% of falls would be missed. The headline false-alert reduction will be large partly because the baseline is weak at trial level. Report it with this context, and report the per-step (window-level) rates too, since those are closer to how Roy et al. report results.
 - **Baseline often alerts before the fall happens** (Phase 3, validation, X-004). In 44% of val fall trials the first baseline alert comes more than 1.5 s before the impact, while the subject is still doing the pre-fall activity. The PRD's trial-level rule (any alert in a fall trial = detected) counts these as detections, so baseline sensitivity is optimistic. Report alert timing relative to impact alongside sensitivity in Phase 6.
+- **Verifier configuration chosen on validation** (Phase 4, X-005). Picked from 2,430 candidates on the same 681 validation trials, so the validation false-alert rate (0.79%) is optimistic. Only test results (Phase 6) should be presented as performance.
+- **Rest rule inactive in the selected configuration** (Phase 4, D-013). With a 1.5 s post window the post interval is 0.5 s, too short for `low_activity_s ≥ 1.0 s`; the deployed rule effectively uses impact, orientation and post-impact stillness only.
+- **Grid edge** (Phase 4). The selected T_still (0.12 g) is the largest value in the PRD grid.
+- **Decision delay** (Phase 4). The proposed system alerts a median 1.84 s after the impact on validation falls (it must wait for post-impact evidence); the baseline's alerts are earlier but often precede the fall.
 
 ## Failure cases (Phase 6)
 

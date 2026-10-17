@@ -136,6 +136,7 @@ def stream(
     from fallmon.splits import load_splits
     from fallmon.storage import Storage
     from fallmon.stream_simulator import StreamSimulator
+    from fallmon.verifier import load_params
 
     cfg = load_config(config)
     index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet").set_index("trial_id")
@@ -148,23 +149,33 @@ def stream(
     ens, scaler = _load_runtime(cfg)
     storage = Storage(cfg.logging.db_path)
     notifier = build_notifier(cfg)
+    params = load_params(cfg)
     procs = {m: StreamProcessor(m, cfg, ens, scaler, storage, notifier,
-                                storage.start_run(m, "adhoc", cfg.model_dump())) for m in modes}
+                                storage.start_run(m, "adhoc", cfg.model_dump()), params=params) for m in modes}
     speed = speed or cfg.stream.default_speed
     typer.echo(f"Data source: {DATA_SOURCE}. No physical device.")
     typer.echo(f"Trial {trial} ({row['activity_group'].replace('_', ' ')}), mode {mode}, speed {speed}x")
     for m, p in procs.items():
         typer.echo(f"  run {m}: {p.run_id}")
 
+    def show(m, d):
+        if d.predicted_activity:
+            flag = "OOD" if d.is_ood else "   "
+            typer.echo(f"[{m:<8}] {d.t_s:6.2f} s  {d.predicted_activity:<10} conf {d.confidence:.3f} {flag} "
+                       f"{d.status:<8} {d.latency_ms:6.2f} ms" + ("  <- ALERT" if d.new_alert else ""))
+        else:
+            typer.echo(f"[{m:<8}] {d.t_s:6.2f} s  end of trial: pending verification decided -> {d.status}")
+        if d.verification is not None:
+            typer.echo(f"[{m:<8}]          verification: {d.verification.reason}")
+
     sim = StreamSimulator([load_trial(Path(cfg.dataset.raw_dir) / row["path"], cfg)], speed=speed, realtime=realtime)
     for sample in sim:
         for m, p in procs.items():
             for d in p.push(sample):
-                flag = "OOD" if d.is_ood else "   "
-                typer.echo(f"[{m:<8}] {d.t_s:6.2f} s  {d.predicted_activity:<10} conf {d.confidence:.3f} {flag} "
-                           f"{d.status:<8} {d.latency_ms:6.2f} ms" + ("  <- ALERT" if d.new_alert else ""))
-    for p in procs.values():
-        p.finish()
+                show(m, d)
+    for m, p in procs.items():
+        for d in p.finish():
+            show(m, d)
     storage.close()
     typer.echo(f"Logged to {cfg.logging.db_path}")
 
@@ -188,6 +199,7 @@ def batch(
     from fallmon.reporting import write_table
     from fallmon.splits import load_splits
     from fallmon.storage import Storage
+    from fallmon.verifier import load_params
 
     cfg = load_config(config)
     splits = load_splits(cfg.dataset.splits_path)
@@ -204,7 +216,7 @@ def batch(
     for m in modes:
         run_id = storage.start_run(m, split, cfg.model_dump())
         notifier = build_notifier(cfg) if cfg.notifier.enabled_in_eval else None  # off by default (PRD 12.4)
-        proc = StreamProcessor(m, cfg, ens, scaler, storage, notifier, run_id)
+        proc = StreamProcessor(m, cfg, ens, scaler, storage, notifier, run_id, params=load_params(cfg))
         trials = (load_trial(Path(cfg.dataset.raw_dir) / p, cfg) for p in rows["path"])
         decisions = run_batch(trials, proc)
         table, stats = summarise_batch(decisions, index)
@@ -221,6 +233,47 @@ def batch(
         for k, v in stats.items():
             typer.echo(f"  {k:<26} {v:.4f}" if isinstance(v, float) else f"  {k:<26} {v}")
     storage.close()
+
+
+@app.command("tune-verifier")
+def tune_verifier(
+    workers: int = typer.Option(0, "--workers", help="Parallel processes (0 = up to 8)."),
+    config: str = ConfigOpt,
+) -> None:
+    """Grid-search the verifier on validation known ADLs and falls only; save models/verifier_config.json."""
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.splits import load_splits
+    from fallmon.tune_verifier import run_tuning
+
+    logging.getLogger("fallmon").setLevel(logging.INFO)
+    cfg = load_config(config)
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet")
+    ens, scaler = _load_runtime(cfg)
+    out = run_tuning(index, load_splits(cfg.dataset.splits_path), ens, scaler, cfg, workers)
+    typer.echo("\n" + out["selection_note"])
+    typer.echo("Selected: " + ", ".join(f"{k}={v}" for k, v in out["params"].items()))
+    for label in ("val_proposed", "val_baseline"):
+        typer.echo(f"{label}: " + ", ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}"
+                                            for k, v in out[label].items()))
+    typer.echo(f"Done in {out['seconds']} s")
+
+
+@app.command("filter-check")
+def filter_check(config: str = ConfigOpt) -> None:
+    """Report the effect of causal vs zero-phase filtering on validation data (PRD 6.1)."""
+    import pandas as pd
+
+    from fallmon.config import load_config
+    from fallmon.filter_check import run_filter_check
+    from fallmon.splits import load_splits
+
+    cfg = load_config(config)
+    index = pd.read_parquet(cfg.dataset.processed_dir / "index.parquet")
+    ens, scaler = _load_runtime(cfg)
+    table = run_filter_check(index, load_splits(cfg.dataset.splits_path), ens, scaler, cfg)
+    typer.echo(table.to_string(index=False))
 
 
 if __name__ == "__main__":

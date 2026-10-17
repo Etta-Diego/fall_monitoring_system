@@ -108,3 +108,18 @@ Entry format:
 - Decision: Phase 6 also reports the baseline (and, for the same threshold, the proposed system) at the threshold giving 95% TPR on **validation** known-ADL steps: 0.4901, stored in `models/dte_meta.json` (`val_metrics.ood.threshold_at_95tpr_val_known`). Config switch `evaluation.report_calibrated_baseline: true`.
 - Primary results stay at 0.9 (D-002). The calibrated threshold comes from validation data only and is fixed before the test split is unlocked.
 - Effect: adds rows to E2/E4; no change to models or tuning.
+
+## D-012: Re-arm after a rejected verification (proposed mode)
+- Date / phase: 2026-10-17 / Phase 4
+- Context: Phase 3 showed that in 44% of val fall trials the first OOD event opens more than 1.5 s before the impact (X-004). In PRD 9.2 the verifier runs once per event, searching for the impact in [t_open − 1.5 s, t_open + 1.0 s]. If an early event stays open (merging OOD steps) through the real impact, the real impact is never examined.
+- Decision: config option `verifier.rearm_after_reject`. When true, a REJECTED verification ends its event at the decision time, so the next OOD step opens a fresh event with its own impact search and verification. Accepted alerts are unchanged (cooldown as before). Whether to use it was **left to the tuning objective**: it was added to the validation grid as `[false, true]`, with ties broken in favour of `false` (the PRD behaviour).
+- Result (validation grid, X-005): with `false`, no configuration reaches the fall-recall constraint (best recall 0.65); with `true`, 357 of 1,215 configurations do. Selected: `true`.
+- Supporting design choice: while a verification is pending, no new event can open (`EventTracker.blocked`); OOD steps in that period are reported with status HOLD. One verification at a time per stream.
+- Effect on fairness: proposed mode only; the baseline is unchanged. More verifications per trial (2,458 on 681 val trials), each one a fresh chance of a false alert, so the re-arm cannot hide false alerts; it can only add them.
+- Evidence: `tests/test_pipeline.py::test_rearm_after_reject_catches_fall_inside_early_event`, `results/tables/verifier_grid_val.csv`.
+
+## D-013: Verifier feature windows made configurable
+- Date / phase: 2026-10-17 / Phase 4
+- Decision: the ±0.5 s impact-peak window and the 0.5 s rolling-std window of PRD 9.3 are config values (`verifier.impact_window_s: 1.0`, `verifier.rolling_std_s: 0.5`) instead of constants in code (no magic numbers, PRD 0.5). Values unchanged.
+- Note on the rest rule: the post interval runs from t_impact + 1.0 s to t_impact + post_window_s, so with post_window_s = 1.5 s it is only 0.5 s long and `low_activity_s` cannot reach rest_s ≥ 1.0 s. This is a property of the PRD's parameterisation, not a bug. It is reported with the selected configuration rather than changed (changing it now would be redesign after seeing validation results).
+- Rules evaluate to false when their feature has no data (e.g. trial ended before the post interval); such verifications are flagged `truncated`.

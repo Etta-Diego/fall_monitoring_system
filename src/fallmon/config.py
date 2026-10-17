@@ -140,6 +140,7 @@ class VerifierGrid(_Strict):
     combine: list[CombineMode]
     k: list[int]
     post_window_s: list[float]
+    rearm_after_reject: list[bool]
 
 
 class VerifierConfig(_Strict):
@@ -148,7 +149,10 @@ class VerifierConfig(_Strict):
     post_window_s: float = Field(gt=0)
     pre_interval_s: tuple[float, float]
     post_interval_start_s: float = Field(ge=0)
+    impact_window_s: float = Field(gt=0)
+    rolling_std_s: float = Field(gt=0)
     still_std_g: float = Field(gt=0)
+    rearm_after_reject: bool
     combine: CombineMode
     k: int = Field(ge=1, le=3)
     thresholds: VerifierThresholds

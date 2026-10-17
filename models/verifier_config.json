@@ -1,0 +1,73 @@
+{
+  "params": {
+    "impact_g": 3.0,
+    "orient_deg": 30.0,
+    "still_std_g": 0.12,
+    "rest_s": 1.0,
+    "combine": "impact_and_k_of_3",
+    "k": 2,
+    "post_window_s": 1.5,
+    "rearm_after_reject": true
+  },
+  "selected_at": "2026-10-17T06:14:10+00:00",
+  "git_hash": "1cf9ebfaa6c2ade85c38852712ed21a52a59a839-dirty",
+  "selection_note": "357 of 2430 configurations meet fall recall >= 0.95; selected the lowest known-ADL false-alert rate (ties: shorter post window, simpler combine, no re-arm, higher recall, grid order).",
+  "objective": "min val known-ADL false-alert rate s.t. val fall recall >= 0.95",
+  "tuning_split": "val",
+  "tuning_groups": [
+    "known_adl",
+    "fall"
+  ],
+  "tuning_subjects": [
+    "SA07",
+    "SA08",
+    "SA16",
+    "SA17",
+    "SE05",
+    "SE07",
+    "SE15"
+  ],
+  "n_trials": {
+    "known_adl": 381,
+    "fall": 300
+  },
+  "ood_threshold": 0.9,
+  "grid_size": 2430,
+  "val_proposed": {
+    "fa_rate_known": 0.007874015748031496,
+    "fall_recall": 0.96,
+    "known_alerts": 3,
+    "fall_alerts": 288,
+    "verifications": 2458,
+    "truncated": 139,
+    "median_first_alert_minus_impact_s": 1.8399999999999999,
+    "p95_first_alert_minus_impact_s": 2.8529999999999998,
+    "falls_first_alert_before_impact_gt_1_5s": 0.0
+  },
+  "val_baseline": {
+    "fa_rate_known": 0.9711286089238845,
+    "fall_recall": 1.0,
+    "known_alerts": 496,
+    "fall_alerts": 320,
+    "verifications": 0,
+    "truncated": 0,
+    "median_first_alert_minus_impact_s": -1.23,
+    "p95_first_alert_minus_impact_s": 0.9620000000000004,
+    "falls_first_alert_before_impact_gt_1_5s": 0.44
+  },
+  "val_rule_pass_rates": {
+    "fall": {
+      "R_impact": 0.5883,
+      "R_orient": 0.7883,
+      "R_still": 0.765,
+      "R_rest": 0.0
+    },
+    "known_adl": {
+      "R_impact": 0.0525,
+      "R_orient": 0.2645,
+      "R_still": 0.8569,
+      "R_rest": 0.0
+    }
+  },
+  "seconds": 127.7
+}

@@ -52,3 +52,13 @@ def assert_not_test(subject_ids, splits: dict, context: str) -> None:
             f"{context}: subjects {locked} are in the test split, which is locked until Phase 6 "
             "(run `fallmon freeze` first; see PRD Section 11)."
         )
+
+
+def assert_verifier_tuned_without_test_or_unknown(tuning_index, splits: dict) -> None:
+    """Guard 4: verifier tuning used validation-split known ADLs and falls only."""
+    bad_groups = set(tuning_index["activity_group"]) - {"known_adl", "fall"}
+    if bad_groups:
+        raise LeakageError(f"verifier tuning data contains {sorted(bad_groups)}")
+    outside = set(tuning_index["subject_id"]) - set(splits["val"])
+    if outside:
+        raise LeakageError(f"verifier tuning data contains non-validation subjects: {sorted(outside)}")

@@ -75,7 +75,10 @@ verifier:
   post_window_s: 2.0
   pre_interval_s: [-2.0, -1.0]
   post_interval_start_s: 1.0
-  still_std_g: 0.05
+  impact_window_s: 1.0     # impact/gyro peak searched in [t_impact - 0.5, t_impact + 0.5] (PRD 9.3)
+  rolling_std_s: 0.5       # trailing window for the low-activity test (PRD 9.3)
+  still_std_g: 0.05        # rolling-std threshold for "low activity" (not T_still)
+  rearm_after_reject: false  # end a REJECTED event so a later impact gets its own verification (D-012)
   combine: impact_and_any
   k: 2
   thresholds: {impact_g: 2.5, orient_deg: 45, still_std_g: 0.08, rest_s: 1.0}
@@ -88,6 +91,7 @@ verifier:
     combine: [impact_and_any, impact_and_k_of_3, all]
     k: [2]
     post_window_s: [1.5, 2.0, 3.0]
+    rearm_after_reject: [false, true]
 
 logging:
   db_path: logs/fallmon.db

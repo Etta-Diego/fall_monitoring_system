@@ -74,3 +74,30 @@ Entry format:
 - Key results: alerted trials known ADL 370/381 (0.9711), fall 300/300 (1.0000); 496 / 320 alerts. Step OOD rate known 0.3649, fall 0.4729 (identical to X-003 offline). Latency mean 1.746 ms, p95 2.589 ms, max 61.3 ms over 21,748 steps. Wall time 3 min 49 s.
 - Fall alert timing (ad hoc): first alert minus impact (argmax Am) median −1.23 s (p5 −4.59, p95 +0.96); 44.0% of fall trials first alerted > 1.5 s before impact; 20 trials with 2 alerts.
 - Source files: `results/tables/phase3_batch_val_baseline.*`, `logs/fallmon.db` (run id above)
+
+## X-005: Verifier grid search on validation
+- Date / phase: 2026-10-17 / Phase 4
+- Command: `fallmon tune-verifier`
+- Split(s) used: val known ADLs (381 trials) and falls (300 trials); 7 subjects; unknown ADLs and test excluded (guard 4)
+- Config / hash: base commit 1cf9ebf + uncommitted Phase 4 code; DTE from X-003; threshold 0.9
+- Grid: 2,430 configurations (PRD grid × rearm_after_reject). Run time 128 s on 8 processes.
+- Selected: T_impact 3.0 g, T_orient 30°, T_still 0.12 g, T_rest 1.0 s, impact_and_k_of_3 (k=2), post window 1.5 s, re-arm on. 357 configurations feasible.
+- Key results: proposed false-alert rate 0.0079 (3/381), recall 0.9600 (288/300); baseline 0.9711 / 1.0000. First alert minus impact on falls: proposed median +1.84 s (p95 +2.85), baseline −1.23 s (p95 +0.96). 2,458 verifications, 139 truncated.
+- Without re-arm: best feasible none; best recall 0.65.
+- Source files: `models/verifier_config.json`, `results/tables/verifier_grid_val.csv`, `verifier_grid_val_top.*`, `verifier_selected_config.*`, `results/figures/phase4_val_verifier_features.png`
+- Notes: selection-optimistic (chosen on the same trials). T_still optimum at grid edge.
+
+## X-006: Causal vs zero-phase filter check
+- Date / phase: 2026-10-17 / Phase 4
+- Command: `fallmon filter-check`
+- Split(s) used: val known ADLs and falls
+- Key results: causal group delay 20.1 ms (1 Hz), 20.8 ms (5 Hz), 23.3 ms (10 Hz). Step OOD rate known 0.3649 vs 0.3640, falls 0.4729 vs 0.4730; AUROC 0.6556 vs 0.6565; mean |Δconfidence| 0.0090. Fall peak Am median 6.49 g vs 6.25 g; peak time shift median 20 ms, max 400 ms.
+- Source files: `results/tables/phase4_filter_check.*`
+- Notes: models not retrained with zero-phase filtering.
+
+## X-007: Proposed batch replay on validation (stream pipeline)
+- Date / phase: 2026-10-17 / Phase 4
+- Command: `fallmon batch --split val --mode proposed` (verifier from X-005)
+- Run: `20261017T061506-proposed-93e433`
+- Key results: alerted trials known ADL 3/381 (0.0079), fall 288/300 (0.9600), exactly matching the tuning replay (X-005). Latency per decision step mean 1.884 ms, p95 2.937 ms, max 53.0 ms over 21,748 steps (baseline X-004: 1.746 / 2.589 ms).
+- Source files: `results/tables/phase3_batch_val_proposed.*`, `logs/fallmon.db`

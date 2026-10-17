@@ -4,7 +4,8 @@ One physical movement should produce at most one event, and so at most one alert
 - an event opens at the first OOD step when no event is open and no cooldown is active;
 - OOD steps within merge_gap_s of the last OOD step extend it;
 - it closes once no OOD step has occurred for merge_gap_s;
-- after an alert, a cooldown of cooldown_s suppresses new events.
+- after an alert, a cooldown of cooldown_s suppresses new events;
+- in proposed mode, no new event opens while a verification is pending (`blocked`).
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ class EventChange(str, Enum):
     OPENED = "opened"
     EXTENDED = "extended"
     CLOSED = "closed"
-    SUPPRESSED = "suppressed"  # OOD step during cooldown, no event open
+    SUPPRESSED = "suppressed"  # OOD step during cooldown (or while blocked), no event open
 
 
 @dataclass
@@ -40,6 +41,7 @@ class EventTracker:
         self.current: Event | None = None
         self.cooldown_until = float("-inf")
         self.count = 0
+        self.blocked = False
 
     def start_cooldown(self, t_alert: float) -> None:
         """Called by the pipeline when an alert is emitted."""
@@ -56,7 +58,7 @@ class EventTracker:
                 ev.t_last_ood = t
                 ev.min_confidence = min(ev.min_confidence, confidence)
                 return EventChange.EXTENDED, ev
-            if self.in_cooldown(t):
+            if self.in_cooldown(t) or self.blocked:
                 return EventChange.SUPPRESSED, None
             self.count += 1
             self.current = Event(self.count, t_open=t, t_last_ood=t, min_confidence=confidence)
@@ -67,6 +69,10 @@ class EventTracker:
 
     def close_at_end(self, t: float) -> Event | None:
         """Trial ended: close any open event."""
+        return self._close(t) if self.current is not None else None
+
+    def end_current(self, t: float) -> Event | None:
+        """Close the open event now (used after a rejected verification when re-arming, D-012)."""
         return self._close(t) if self.current is not None else None
 
     def _close(self, t: float) -> Event:
