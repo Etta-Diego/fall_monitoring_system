@@ -13,3 +13,4 @@ plotly>=5.18
 streamlit>=1.32
 pytest>=8.0
 tabulate>=0.9
+-e .
